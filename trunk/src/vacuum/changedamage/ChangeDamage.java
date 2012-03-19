@@ -17,12 +17,21 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class ChangeDamage extends JavaPlugin{
 
 	private DamageListener dl;
-	private static final String fileRepository = "/";
+	private boolean verbose;
+	private static final String fileRepository = "http://vacuum-changedamage.googlecode.com/svn/trunk/resources/";
 	private static final String damageFile = "damages.txt";
 	private static final String idFile = "items.txt";
 	
 	@Override
 	public void onEnable() {
+		getDataFile("config.yml", false);
+		if(!getConfig().contains("pvponly")){
+			getConfig().createSection("pvponly");
+			getConfig().set("pvponly", true);
+			getConfig().createSection("verbose");
+			getConfig().set("verbose", false);
+		}
+		verbose = getConfig().getBoolean("verbose", false);
 		dl = new DamageListener();
 		loadDamageMap();
 		getServer().getPluginManager().registerEvents(dl, this);
@@ -36,9 +45,16 @@ public class ChangeDamage extends JavaPlugin{
 			while(s.hasNext()){
 				String line = s.nextLine();
 				try {
-					int id = getID(line.substring(0, line.indexOf(' ')));
+					String name = line.substring(0, line.indexOf(' ')).toUpperCase().replace(" ", "_");
+					if(name.equals("FLYING_ARROW")){
+						dl.setArrowDamage(Double.parseDouble(line.substring(line.indexOf(' ') + 1)));
+						continue;
+					}
+					int id = getID(name);
 					int damage = Integer.parseInt(line.substring(line.indexOf(' ') + 1));
 					dl.put(id, damage);
+					if(verbose)
+					System.out.println("Put " + id + ", " + damage);
 				} catch (Throwable t){
 					//there was some funny syntax
 					t.printStackTrace();
@@ -48,12 +64,8 @@ public class ChangeDamage extends JavaPlugin{
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-		getDataFile("config.yml", false);
-		if(!getConfig().contains("pvponly")){
-			getConfig().createSection("pvponly");
-			getConfig().set("pvponly", true);
-		}
 		dl.setPVPOnly(getConfig().getBoolean("pvponly", true));
+		dl.setVerbose(verbose);
 	}
 
 	@Override
@@ -78,8 +90,6 @@ public class ChangeDamage extends JavaPlugin{
 		} catch (NumberFormatException ex){
 			//ignore
 		}
-		
-		name = name.toUpperCase().replace(" ", "_");
 		File f = getDataFile(idFile, true);
 		try {
 			Scanner s = new Scanner(f);
@@ -107,7 +117,6 @@ public class ChangeDamage extends JavaPlugin{
 	
 	public File getDataFile(String name, boolean download){
 		File f = new File(getDataFolder() + File.separator + name);
-		System.out.println(f);
 		if(f.exists())
 			return f;
 		try {
