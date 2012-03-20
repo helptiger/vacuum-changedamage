@@ -28,8 +28,15 @@ public class ChangeDamage extends JavaPlugin{
 		if(!getConfig().contains("pvponly")){
 			getConfig().createSection("pvponly");
 			getConfig().set("pvponly", true);
+		}
+		if(!getConfig().contains("verbose")){
 			getConfig().createSection("verbose");
 			getConfig().set("verbose", false);
+		}
+
+		if(!getConfig().contains("defaultdamage")){
+			getConfig().createSection("defaultdamage");
+			getConfig().set("defaultdamage", -1);
 		}
 		verbose = getConfig().getBoolean("verbose", false);
 		dl = new DamageListener();
@@ -51,6 +58,10 @@ public class ChangeDamage extends JavaPlugin{
 						continue;
 					}
 					int id = getID(name);
+					if(id == -1){
+						System.out.println("Failed to find item " + name);
+						continue;
+					}
 					int damage = Integer.parseInt(line.substring(line.indexOf(' ') + 1));
 					dl.put(id, damage);
 					if(verbose)
@@ -66,6 +77,7 @@ public class ChangeDamage extends JavaPlugin{
 		}
 		dl.setPVPOnly(getConfig().getBoolean("pvponly", true));
 		dl.setVerbose(verbose);
+		dl.setDefaultDamage(getConfig().getInt("defaultdamage", -1));
 	}
 
 	@Override
