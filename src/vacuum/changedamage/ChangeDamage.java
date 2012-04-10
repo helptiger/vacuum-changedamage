@@ -10,8 +10,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Scanner;
 
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class ChangeDamage extends JavaPlugin{
@@ -19,33 +21,57 @@ public class ChangeDamage extends JavaPlugin{
 	private DamageListener dl;
 	private boolean verbose;
 	private static final String fileRepository = "http://vacuum-changedamage.googlecode.com/svn/trunk/resources/";
-	private static final String damageFile = "damages.txt";
+	//private static final String damageFile = "damages.txt";
 	private static final String idFile = "items.txt";
-	
+
 	@Override
 	public void onEnable() {
 		getDataFile("config.yml", false);
+
+		boolean b  = false;
 		if(!getConfig().contains("pvponly")){
 			getConfig().createSection("pvponly");
 			getConfig().set("pvponly", true);
+			b = true;
 		}
+
 		if(!getConfig().contains("verbose")){
 			getConfig().createSection("verbose");
 			getConfig().set("verbose", false);
+			b = true;
 		}
 
-		if(!getConfig().contains("defaultdamage")){
-			getConfig().createSection("defaultdamage");
-			getConfig().set("defaultdamage", -1);
+		if(!getConfig().contains("damages")){
+			getConfig().createSection("damages");
+			b = true;
 		}
+		
+		if(!getConfig().contains("damages.default")){
+			getConfig().createSection("damages.default");
+			
+			//put some values in
+			getConfig().createSection("damages.default.DIAMOND_SWORD");
+			getConfig().set("damages.default.DIAMOND_SWORD", 9);
+			b = true;
+		}
+		
+		if(b)
+			try {
+				getConfig().save(getDataFile("config.yml", false));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
 		verbose = getConfig().getBoolean("verbose", false);
 		dl = new DamageListener();
-		loadDamageMap();
+		reload();
 		getServer().getPluginManager().registerEvents(dl, this);
 	}
 
-	private void loadDamageMap() {
+	private void reload() {
 		dl.clear();
+		loadDamageMap();
+		/*
 		File f = getDataFile(damageFile, true);
 		try {
 			Scanner s = new Scanner(f);
@@ -54,7 +80,7 @@ public class ChangeDamage extends JavaPlugin{
 				try {
 					String name = line.substring(0, line.indexOf(' ')).toUpperCase().replace(" ", "_");
 					if(name.equals("FLYING_ARROW")){
-						dl.setArrowDamage(Double.parseDouble(line.substring(line.indexOf(' ') + 1)));
+						dl.setArrowDamage(null, Double.parseDouble(line.substring(line.indexOf(' ') + 1)));
 						continue;
 					}
 					int id = getID(name);
@@ -63,9 +89,9 @@ public class ChangeDamage extends JavaPlugin{
 						continue;
 					}
 					int damage = Integer.parseInt(line.substring(line.indexOf(' ') + 1));
-					dl.put(id, damage);
+					dl.put(null, id, damage);
 					if(verbose)
-					System.out.println("Put " + id + ", " + damage);
+						System.out.println("Put " + id + ", " + damage);
 				} catch (Throwable t){
 					//there was some funny syntax
 					t.printStackTrace();
@@ -74,10 +100,10 @@ public class ChangeDamage extends JavaPlugin{
 			}
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
-		}
+		}*/
 		dl.setPVPOnly(getConfig().getBoolean("pvponly", true));
 		dl.setVerbose(verbose);
-		dl.setDefaultDamage(getConfig().getInt("defaultdamage", -1));
+		//		dl.setDefaultDamage(null, getConfig().getInt("defaultdamage", -1));
 	}
 
 	@Override
@@ -87,20 +113,20 @@ public class ChangeDamage extends JavaPlugin{
 			if(args[0].equalsIgnoreCase("release")){
 				this.getPluginLoader().disablePlugin(this);
 			} else if(args[0].equalsIgnoreCase("reload")){
-				loadDamageMap();
+				reload();
 			} else
 				return false;
 			return true;
 		}
 		return false;
 	}
-	
+
 	public int getID(String name){
-		
+
 		try{
 			return Integer.parseInt(name);
 		} catch (NumberFormatException ex){
-			//ignore
+			//ignore b/c it means this isn't an ID, it's a name
 		}
 		File f = getDataFile(idFile, true);
 		try {
@@ -124,9 +150,9 @@ public class ChangeDamage extends JavaPlugin{
 			e.printStackTrace();
 		}
 		return -1;
-		
+
 	}
-	
+
 	public File getDataFile(String name, boolean download){
 		File f = new File(getDataFolder() + File.separator + name);
 		if(f.exists())
@@ -157,5 +183,29 @@ public class ChangeDamage extends JavaPlugin{
 		}
 		return f;
 	}
-	
+
+	private void loadDamageMap(){
+		ConfigurationSection section = getConfig().getConfigurationSection("damages");
+		for(String s : section.getKeys(false)){
+			ConfigurationSection sub = section.getConfigurationSection(s);
+			World w = (s.equals("default")) ? null : getServer().getWorld(s);
+			System.out.println("[" + getDescription().getName() + "]Loading damages for world " + ((w == null) ? "default" : w.getName()));
+			for(String str : sub.getKeys(false)){
+				try{
+					if(str.equalsIgnoreCase("FLYING_ARROW")){
+						dl.setArrowDamage(w, sub.getDouble(str));
+					} else if (str.equalsIgnoreCase("default")){
+						dl.setDefaultDamage(w, sub.getInt(str));
+					} else {
+						dl.put(w, getID(str), sub.getInt(str));
+					}
+				} catch (Exception ex){
+					ex.printStackTrace();
+					System.out.println("[" + getDescription().getName() + "]Configuration node damage." + s + "." + str + " is causing an issue.");
+				}
+			}
+		}
+		System.out.println("[" + getDescription().getName() + "]Successfully loaded damages!");
+	}
+
 }

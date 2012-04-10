@@ -1,5 +1,5 @@
 name: ChangeDamage
-version: 0.1.1
+version: 1.0.0
 description: Change damage done by an item
 author: FalseVacuum
 authors: [FalseVacuum] 
@@ -19,10 +19,6 @@ commands:
       Example: /<command> release - Disable the plugin
   
 permissions:
-  vacuum.*:
-    description: Gives access to all ChangeDamage commands
-    children:
-      vacuum.changedamage: true
   vacuum.changedamage:
     description: Access ChangeDamage commands
     default: op
