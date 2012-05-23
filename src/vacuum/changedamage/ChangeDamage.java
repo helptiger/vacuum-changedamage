@@ -10,6 +10,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Scanner;
 
+import net.minecraft.server.Item;
+import net.minecraft.server.ItemArmor;
+
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -23,6 +26,7 @@ public class ChangeDamage extends JavaPlugin{
 	private static final String fileRepository = "http://vacuum-changedamage.googlecode.com/svn/trunk/resources/";
 	//private static final String damageFile = "damages.txt";
 	private static final String idFile = "items.txt";
+	private ArmorHook armorHook;
 
 	@Override
 	public void onEnable() {
@@ -45,16 +49,30 @@ public class ChangeDamage extends JavaPlugin{
 			getConfig().createSection("damages");
 			b = true;
 		}
-		
+
 		if(!getConfig().contains("damages.default")){
 			getConfig().createSection("damages.default");
-			
+
 			//put some values in
 			getConfig().createSection("damages.default.DIAMOND_SWORD");
 			getConfig().set("damages.default.DIAMOND_SWORD", 9);
 			b = true;
 		}
 		
+		if(!getConfig().contains("armor")){
+			getConfig().createSection("armor");
+			b = true;
+		}
+
+		if(!getConfig().contains("armor.default")){
+			getConfig().createSection("armor.default");
+
+			//put some values in
+			getConfig().createSection("armor.default.DIAMOND_CHESTPLATE");
+			getConfig().set("armor.default.DIAMOND_CHESTPLATE", 8);
+			b = true;
+		}
+
 		if(b)
 			try {
 				getConfig().save(getDataFile("config.yml", false));
@@ -64,13 +82,24 @@ public class ChangeDamage extends JavaPlugin{
 
 		verbose = getConfig().getBoolean("verbose", false);
 		dl = new DamageListener();
+		try {
+			armorHook = new ArmorHook();
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (NoSuchFieldException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}
 		reload();
 		getServer().getPluginManager().registerEvents(dl, this);
 	}
 
 	private void reload() {
 		dl.clear();
+		armorHook.restore();
 		loadDamageMap();
+		loadArmor();
 		/*
 		File f = getDataFile(damageFile, true);
 		try {
@@ -104,6 +133,24 @@ public class ChangeDamage extends JavaPlugin{
 		dl.setPVPOnly(getConfig().getBoolean("pvponly", true));
 		dl.setVerbose(verbose);
 		//		dl.setDefaultDamage(null, getConfig().getInt("defaultdamage", -1));
+	}
+
+	private void loadArmor() {
+		ConfigurationSection section = getConfig().getConfigurationSection("armor");
+		for(String s : section.getKeys(false)){
+			ConfigurationSection sub = section.getConfigurationSection(s);
+			World w = (s.equals("default")) ? null : getServer().getWorld(s);
+			System.out.println("[" + getDescription().getName() + "]Loading armor modifications for world " + ((w == null) ? "default" : w.getName()));
+			for(String str : sub.getKeys(false)){
+				try{
+						armorHook.modifyArmorValue(getID(str), sub.getInt(str));
+				} catch (Exception ex){
+					ex.printStackTrace();
+					System.out.println("[" + getDescription().getName() + "]Configuration node armor." + s + "." + str + " is causing an issue.");
+				}
+			}
+		}
+		System.out.println("[" + getDescription().getName() + "]Successfully loaded armor modifications!");
 	}
 
 	@Override
@@ -206,6 +253,11 @@ public class ChangeDamage extends JavaPlugin{
 			}
 		}
 		System.out.println("[" + getDescription().getName() + "]Successfully loaded damages!");
+	}
+
+	@Override
+	public void onDisable(){
+		armorHook.restore();
 	}
 
 }
