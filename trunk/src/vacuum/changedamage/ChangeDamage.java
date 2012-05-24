@@ -10,9 +10,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Scanner;
 
-import net.minecraft.server.Item;
-import net.minecraft.server.ItemArmor;
-
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -26,7 +23,9 @@ public class ChangeDamage extends JavaPlugin{
 	private static final String fileRepository = "http://vacuum-changedamage.googlecode.com/svn/trunk/resources/";
 	//private static final String damageFile = "damages.txt";
 	private static final String idFile = "items.txt";
+	private static final String potionEffectFile = "potioneffects.txt";
 	private ArmorHook armorHook;
+	private PotionListener potionListener;
 
 	@Override
 	public void onEnable() {
@@ -58,7 +57,7 @@ public class ChangeDamage extends JavaPlugin{
 			getConfig().set("damages.default.DIAMOND_SWORD", 9);
 			b = true;
 		}
-		
+
 		if(!getConfig().contains("armor")){
 			getConfig().createSection("armor");
 			b = true;
@@ -72,6 +71,29 @@ public class ChangeDamage extends JavaPlugin{
 			getConfig().set("armor.default.DIAMOND_CHESTPLATE", 8);
 			b = true;
 		}
+
+		/*if(!getConfig().contains("potion")){
+			getConfig().createSection("potion");
+			b = true;
+		}
+
+		if(!getConfig().contains("potion.duration")){
+			getConfig().createSection("potion.duration.default");
+
+			//put some values in
+			getConfig().createSection("potion.duration.default.HEAL");
+			getConfig().set("potion.duration.default.HEAL", 1.0);
+			b = true;
+		}
+		
+		if(!getConfig().contains("potion.amplifier")){
+			getConfig().createSection("potion.amplifier.default");
+
+			//put some values in
+			getConfig().createSection("potion.amplifier.default.HEAL");
+			getConfig().set("potion.amplifier.default.HEAL", 1.0);
+			b = true;
+		}*/
 
 		if(b)
 			try {
@@ -91,15 +113,19 @@ public class ChangeDamage extends JavaPlugin{
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
 		}
+		/*potionListener = new PotionListener();*/
 		reload();
 		getServer().getPluginManager().registerEvents(dl, this);
+		/*getServer().getPluginManager().registerEvents(potionListener, this);*/
 	}
 
 	private void reload() {
 		dl.clear();
 		armorHook.restore();
+		/*potionListener.clear();*/
 		loadDamageMap();
 		loadArmor();
+		/*loadPotionEffects();*/
 		/*
 		File f = getDataFile(damageFile, true);
 		try {
@@ -130,9 +156,51 @@ public class ChangeDamage extends JavaPlugin{
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}*/
-		dl.setPVPOnly(getConfig().getBoolean("pvponly", true));
+		boolean pvpOnly = getConfig().getBoolean("pvponly", true);
+		dl.setPVPOnly(pvpOnly);
 		dl.setVerbose(verbose);
+		/*potionListener.setPVPOnly(pvpOnly);
+		potionListener.setVerbose(verbose);*/
 		//		dl.setDefaultDamage(null, getConfig().getInt("defaultdamage", -1));
+	}
+
+	private void loadPotionEffects() {
+		/* duration */
+		{
+			ConfigurationSection section = getConfig().getConfigurationSection("potion.duration");
+			for(String s : section.getKeys(false)){
+				ConfigurationSection sub = section.getConfigurationSection(s);
+				World w = (s.equals("default")) ? null : getServer().getWorld(s);
+				System.out.println("[" + getDescription().getName() + "]Loading potion effects for world " + ((w == null) ? "default" : w.getName()));
+				for(String str : sub.getKeys(false)){
+					try{
+						potionListener.putDuration(getID(str, potionEffectFile), sub.getDouble(str));
+					} catch (Exception ex){
+						ex.printStackTrace();
+						System.out.println("[" + getDescription().getName() + "]Configuration node potion." + s + "." + str + " is causing an issue.");
+					}
+				}
+			}
+		}
+		/* amplifier */
+		{
+			ConfigurationSection section = getConfig().getConfigurationSection("potion.amplifier");
+			for(String s : section.getKeys(false)){
+				ConfigurationSection sub = section.getConfigurationSection(s);
+				World w = (s.equals("default")) ? null : getServer().getWorld(s);
+				System.out.println("[" + getDescription().getName() + "]Loading potion effects for world " + ((w == null) ? "default" : w.getName()));
+				for(String str : sub.getKeys(false)){
+					try{
+						potionListener.putAmplifier(getID(str, potionEffectFile), sub.getDouble(str));
+					} catch (Exception ex){
+						ex.printStackTrace();
+						System.out.println("[" + getDescription().getName() + "]Configuration node potion." + s + "." + str + " is causing an issue.");
+					}
+				}
+			}
+		}
+		System.out.println("[" + getDescription().getName() + "]Successfully loaded potion effects!");
+
 	}
 
 	private void loadArmor() {
@@ -143,7 +211,7 @@ public class ChangeDamage extends JavaPlugin{
 			System.out.println("[" + getDescription().getName() + "]Loading armor modifications for world " + ((w == null) ? "default" : w.getName()));
 			for(String str : sub.getKeys(false)){
 				try{
-						armorHook.modifyArmorValue(getID(str), sub.getInt(str));
+					armorHook.modifyArmorValue(getID(str, idFile), sub.getInt(str));
 				} catch (Exception ex){
 					ex.printStackTrace();
 					System.out.println("[" + getDescription().getName() + "]Configuration node armor." + s + "." + str + " is causing an issue.");
@@ -168,14 +236,14 @@ public class ChangeDamage extends JavaPlugin{
 		return false;
 	}
 
-	public int getID(String name){
+	public int getID(String name, String file){
 
 		try{
 			return Integer.parseInt(name);
 		} catch (NumberFormatException ex){
 			//ignore b/c it means this isn't an ID, it's a name
 		}
-		File f = getDataFile(idFile, true);
+		File f = getDataFile(file, true);
 		try {
 			Scanner s = new Scanner(f);
 			String line;
@@ -244,7 +312,7 @@ public class ChangeDamage extends JavaPlugin{
 					} else if (str.equalsIgnoreCase("default")){
 						dl.setDefaultDamage(w, sub.getInt(str));
 					} else {
-						dl.put(w, getID(str), sub.getInt(str));
+						dl.put(w, getID(str, idFile), sub.getInt(str));
 					}
 				} catch (Exception ex){
 					ex.printStackTrace();

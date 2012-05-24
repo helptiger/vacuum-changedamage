@@ -30,6 +30,8 @@ public class DamageListener implements Listener{
 	public void entityDamaged(EntityDamageByEntityEvent evt){
 		Player p;
 		if(evt.getDamager() instanceof Player){
+			if(!((Player)evt.getDamager()).hasPermission("vacuum.changedamage.damage"))
+				return;
 			if(pvpOnly && !(evt.getEntity() instanceof Player))
 				return;
 			p = (Player) evt.getDamager();
