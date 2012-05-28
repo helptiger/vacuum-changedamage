@@ -69,7 +69,29 @@ public class DamageListener implements Listener{
 		} else if (evt.getDamager() instanceof Arrow){
 			if(!(((Arrow)evt.getDamager()).getShooter() instanceof Player))
 				return;
-			double arrowDamage = worldToArrowDamageMap.get(evt.getDamager().getWorld());
+			
+			/*if(verbose){
+				try{
+				System.out.println("worldToArrowDamageMap: " + worldToArrowDamageMap);
+				System.out.println("evt: " + evt);
+				System.out.println("evt.getDamager(): " + evt.getDamager());
+				System.out.println("evt.getDamager().getWorld()" + evt.getDamager().getWorld());
+				System.out.println("worldToArrowDamageMap.get(evt.getDamager().getWorld()): " 
+						+ worldToArrowDamageMap.get(evt.getDamager().getWorld()));
+				} catch (Exception ex){
+					//ignore!
+				}
+			}*/
+			
+			Double arrowDamage = 
+					worldToArrowDamageMap
+					.get(
+							evt
+							.getDamager()
+							.getWorld()
+							);
+			if(arrowDamage == null)
+				return;
 			double raw = evt.getDamage() * arrowDamage;
 			if(verbose)
 				System.out.println("Raw arrow damage: " + raw);

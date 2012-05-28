@@ -14,10 +14,14 @@ import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import vacuum.changedamage.hooks.ArmorHook;
 
 public class ChangeDamage extends JavaPlugin{
 
+	public static boolean research = false;
 	private DamageListener dl;
 	private boolean verbose;
 	private static final String fileRepository = "http://vacuum-changedamage.googlecode.com/svn/trunk/resources/";
@@ -26,6 +30,7 @@ public class ChangeDamage extends JavaPlugin{
 	private static final String potionEffectFile = "potioneffects.txt";
 	private ArmorHook armorHook;
 	private PotionListener potionListener;
+	private PlayerJoinListener pjl;
 
 	@Override
 	public void onEnable() {
@@ -41,6 +46,12 @@ public class ChangeDamage extends JavaPlugin{
 		if(!getConfig().contains("verbose")){
 			getConfig().createSection("verbose");
 			getConfig().set("verbose", false);
+			b = true;
+		}
+		
+		if(!getConfig().contains("research")){
+			getConfig().createSection("research");
+			getConfig().set("research", true);
 			b = true;
 		}
 
@@ -113,18 +124,22 @@ public class ChangeDamage extends JavaPlugin{
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
 		}
+		pjl = new PlayerJoinListener();
 		/*potionListener = new PotionListener();*/
 		reload();
 		getServer().getPluginManager().registerEvents(dl, this);
+		getServer().getPluginManager().registerEvents(pjl, this);
 		/*getServer().getPluginManager().registerEvents(potionListener, this);*/
 	}
 
 	private void reload() {
 		dl.clear();
 		armorHook.restore();
+		pjl.close();
 		/*potionListener.clear();*/
 		loadDamageMap();
 		loadArmor();
+		pjl.open();
 		/*loadPotionEffects();*/
 		/*
 		File f = getDataFile(damageFile, true);
@@ -156,6 +171,7 @@ public class ChangeDamage extends JavaPlugin{
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}*/
+		research = getConfig().getBoolean("research", true);
 		boolean pvpOnly = getConfig().getBoolean("pvponly", true);
 		dl.setPVPOnly(pvpOnly);
 		dl.setVerbose(verbose);

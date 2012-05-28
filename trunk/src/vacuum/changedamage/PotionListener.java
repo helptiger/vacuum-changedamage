@@ -9,7 +9,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason;
 import org.bukkit.event.entity.PotionSplashEvent;
 import org.bukkit.potion.PotionEffect;
 
@@ -49,7 +51,13 @@ public class PotionListener implements Listener{
 	public void onEntityDamaged(EntityDamageEvent evt){
 		if(evt.getCause().equals(DamageCause.MAGIC)){
 				
+		} else if (evt.getCause().equals(DamageCause.POISON)){
+			
 		}
+	}
+	
+	public void onEntityHealed(EntityRegainHealthEvent evt){
+		//if(evt.getRegainReason().equals(RegainReason.))
 	}
 
 	public void clear(){
