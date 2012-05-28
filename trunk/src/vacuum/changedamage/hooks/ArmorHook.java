@@ -1,4 +1,4 @@
-package vacuum.changedamage;
+package vacuum.changedamage.hooks;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
