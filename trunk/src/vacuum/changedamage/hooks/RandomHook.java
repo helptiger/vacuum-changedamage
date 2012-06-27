@@ -8,14 +8,16 @@ import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-import vacuum.changedamage.ChangeDamage;
+import vacuum.changedamage.ChangeDamagePlugin;
+import vacuum.changedamage.equations.PostfixNotation;
+import vacuum.changedamage.equations.element.number.Variable;
 
 public class RandomHook extends Random{
 
-	public static boolean applyHook(Player p){
+	public static boolean applyHook(Player p, PostfixNotation expression, Variable n){
 		try {
-			System.out.println("[ChangeDamage] Applying Rnadom hook to " + p.getName());
-			new RandomHook(p);
+			System.out.println("[ChangeDamage] Applying Random hook to " + p.getName());
+			new RandomHook(p, expression, n);
 			System.out.println("[ChangeDamage] Random hook successfully applied!");
 			return true;
 		} catch (SecurityException ex) {
@@ -44,21 +46,30 @@ public class RandomHook extends Random{
 		return false;
 	}
 
-	private RandomHook(Entity entity) throws SecurityException, NoSuchFieldException, IllegalAccessException{
+	private PostfixNotation expression;
+	private Variable n;
+
+	private RandomHook(Entity entity, PostfixNotation expression, Variable n) throws SecurityException, NoSuchFieldException, IllegalAccessException{
 		super();
 		Field random = net.minecraft.server.Entity.class.getDeclaredField("random");
 		random.setAccessible(true);
 		random.set(((CraftEntity)entity).getHandle(), this);
+		this.expression = expression;
+		this.n = n;
 	}
 
 	public int nextInt(int n){
 		StackTraceElement stackTraceElement = Thread.currentThread().getStackTrace()[2];
-		if(stackTraceElement.getMethodName() != "aA" && ChangeDamage.research)
+		if(stackTraceElement.getMethodName() != "aA" && ChangeDamagePlugin.research)
 			System.out.println("[ChangeDamage] [Research] Please alert the developer!" + stackTraceElement.getClassName() + ", " + stackTraceElement.getMethodName());
-		if(stackTraceElement.getClassName().equals("net.minecraft.server.EntityHuman")/* && stackTraceElement.getMethodName().equals("attack")*/){
-			if(ChangeDamage.research)
-				System.out.println("[ChangeDamage] [Research] We believe a critical hit happened. Please alert the developer.");
+		if(stackTraceElement.getClassName().equals("net.minecraft.server.EntityHuman") && stackTraceElement.getMethodName().equals("attack")){
+//			if(ChangeDamage.research)
+//				System.out.println("[ChangeDamage] [Research] We believe a critical hit happened. Please alert the developer.");
+			this.n.setValue(n);
+			return (int) Math.round(expression.evaluate());
+			
 		}
+		
 		return super.nextInt(n);
 	}
 }
