@@ -1,4 +1,4 @@
-package vacuum.changedamage;
+package vacuum.changedamage.listener;
 
 import java.util.HashMap;
 

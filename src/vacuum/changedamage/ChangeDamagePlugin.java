@@ -14,12 +14,19 @@ import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import vacuum.changedamage.equations.ExpressionParser;
+import vacuum.changedamage.equations.PostfixNotation;
+import vacuum.changedamage.equations.element.number.Variable;
+import vacuum.changedamage.equations.element.number.VariablePool;
 import vacuum.changedamage.hooks.ArmorHook;
+import vacuum.changedamage.listener.DamageListener;
+import vacuum.changedamage.listener.FallListener;
+import vacuum.changedamage.listener.PlayerJoinListener;
+import vacuum.changedamage.listener.PotionListener;
 
-public class ChangeDamage extends JavaPlugin{
+public class ChangeDamagePlugin extends JavaPlugin{
 
 	public static boolean research = false;
 	private DamageListener dl;
@@ -31,6 +38,7 @@ public class ChangeDamage extends JavaPlugin{
 	private ArmorHook armorHook;
 	private PotionListener potionListener;
 	private PlayerJoinListener pjl;
+	private FallListener fl;
 
 	@Override
 	public void onEnable() {
@@ -48,7 +56,7 @@ public class ChangeDamage extends JavaPlugin{
 			getConfig().set("verbose", false);
 			b = true;
 		}
-		
+
 		if(!getConfig().contains("research")){
 			getConfig().createSection("research");
 			getConfig().set("research", true);
@@ -82,6 +90,28 @@ public class ChangeDamage extends JavaPlugin{
 			getConfig().set("armor.default.DIAMOND_CHESTPLATE", 8);
 			b = true;
 		}
+		
+		if(!getConfig().contains("critical")){
+			getConfig().createSection("critical");
+			b = true;
+		}
+
+		if(!getConfig().contains("critical.equation")){
+			getConfig().createSection("critical.equation");
+			getConfig().set("critical.equation", "2 n 2 - 2 * 2 / +");
+			b = true;
+		}
+		
+		if(!getConfig().contains("fall")){
+			getConfig().createSection("fall");
+			b = true;
+		}
+		
+		if(!getConfig().contains("fall.equation")){
+			getConfig().createSection("fall.equation");
+			getConfig().set("fall.equation", "d 3 - a 0 * +"); //TODO: equation
+			b = true;
+		}
 
 		/*if(!getConfig().contains("potion")){
 			getConfig().createSection("potion");
@@ -96,7 +126,7 @@ public class ChangeDamage extends JavaPlugin{
 			getConfig().set("potion.duration.default.HEAL", 1.0);
 			b = true;
 		}
-		
+
 		if(!getConfig().contains("potion.amplifier")){
 			getConfig().createSection("potion.amplifier.default");
 
@@ -115,6 +145,8 @@ public class ChangeDamage extends JavaPlugin{
 
 		verbose = getConfig().getBoolean("verbose", false);
 		dl = new DamageListener();
+		fl = new FallListener();
+		loadCriticalHit();
 		try {
 			armorHook = new ArmorHook();
 		} catch (SecurityException e) {
@@ -124,11 +156,11 @@ public class ChangeDamage extends JavaPlugin{
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
 		}
-		pjl = new PlayerJoinListener();
 		/*potionListener = new PotionListener();*/
 		reload();
 		getServer().getPluginManager().registerEvents(dl, this);
 		getServer().getPluginManager().registerEvents(pjl, this);
+		getServer().getPluginManager().registerEvents(fl, this);
 		/*getServer().getPluginManager().registerEvents(potionListener, this);*/
 	}
 
@@ -139,7 +171,8 @@ public class ChangeDamage extends JavaPlugin{
 		/*potionListener.clear();*/
 		loadDamageMap();
 		loadArmor();
-		pjl.open();
+		loadCriticalHit();
+		loadFall();
 		/*loadPotionEffects();*/
 		/*
 		File f = getDataFile(damageFile, true);
@@ -178,6 +211,27 @@ public class ChangeDamage extends JavaPlugin{
 		/*potionListener.setPVPOnly(pvpOnly);
 		potionListener.setVerbose(verbose);*/
 		//		dl.setDefaultDamage(null, getConfig().getInt("defaultdamage", -1));
+	}
+
+	private void loadFall() {
+		System.out.println("Loading fall config");
+		VariablePool pool = new VariablePool(false);
+		Variable d = pool.register("d", 0);
+		Variable a = pool.register("a", 0);
+		String eq = getConfig().getString("fall.equation", "");
+		PostfixNotation expression = ExpressionParser.parsePostfix(eq, pool);
+		fl.setExpression(expression, d, a);
+	}
+
+	private void loadCriticalHit() {
+		VariablePool pool = new VariablePool(false);
+		Variable n = pool.register("n", 0);
+		String eq = getConfig().getString("critical.equation", "");
+		PostfixNotation notation = ExpressionParser.parsePostfix(eq, pool);
+		if(pjl == null)
+			pjl = new PlayerJoinListener(notation, n);
+		else
+			pjl.open(notation, n);
 	}
 
 	private void loadPotionEffects() {
@@ -224,17 +278,17 @@ public class ChangeDamage extends JavaPlugin{
 		for(String s : section.getKeys(false)){
 			ConfigurationSection sub = section.getConfigurationSection(s);
 			World w = (s.equals("default")) ? null : getServer().getWorld(s);
-			System.out.println("[" + getDescription().getName() + "]Loading armor modifications for world " + ((w == null) ? "default" : w.getName()));
+			System.out.println("[" + getDescription().getName() + "] Loading armor modifications for world " + ((w == null) ? "default" : w.getName()));
 			for(String str : sub.getKeys(false)){
 				try{
 					armorHook.modifyArmorValue(getID(str, idFile), sub.getInt(str));
 				} catch (Exception ex){
 					ex.printStackTrace();
-					System.out.println("[" + getDescription().getName() + "]Configuration node armor." + s + "." + str + " is causing an issue.");
+					System.out.println("[" + getDescription().getName() + "] Configuration node armor." + s + "." + str + " is causing an issue.");
 				}
 			}
 		}
-		System.out.println("[" + getDescription().getName() + "]Successfully loaded armor modifications!");
+		System.out.println("[" + getDescription().getName() + "] Successfully loaded armor modifications!");
 	}
 
 	@Override

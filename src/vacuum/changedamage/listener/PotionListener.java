@@ -1,19 +1,11 @@
-package vacuum.changedamage;
+package vacuum.changedamage.listener;
 
-import java.util.Collection;
 import java.util.HashMap;
 
-import net.minecraft.server.EntityDamageSourceIndirect;
-
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
-import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason;
-import org.bukkit.event.entity.PotionSplashEvent;
-import org.bukkit.potion.PotionEffect;
+import org.bukkit.event.entity.EntityRegainHealthEvent;
 
 public class PotionListener implements Listener{
 
