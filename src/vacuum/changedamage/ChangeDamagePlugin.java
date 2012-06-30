@@ -10,6 +10,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Scanner;
 
+import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -23,25 +24,32 @@ import vacuum.changedamage.equations.element.number.VariablePool;
 import vacuum.changedamage.hooks.ArmorHook;
 import vacuum.changedamage.listener.DamageListener;
 import vacuum.changedamage.listener.FallListener;
-import vacuum.changedamage.listener.PlayerJoinListener;
 import vacuum.changedamage.listener.PotionListener;
 
 public class ChangeDamagePlugin extends JavaPlugin{
 
+	private static final String fileRepository = "http://vacuum-changedamage.googlecode.com/svn/trunk/resources/";
+	private static final String experimentalUpdateRepository = fileRepository + "jars/experimental/";
+	private static final String stableUpdateRepository = fileRepository + "jars/stable/";
+	private static final String updateJAR = "ChangeDamage.jar";
+	private static final String updateVersion = "version.txt";
+
 	public static boolean research = false;
 	private DamageListener dl;
 	private boolean verbose;
-	private static final String fileRepository = "http://vacuum-changedamage.googlecode.com/svn/trunk/resources/";
-	//private static final String damageFile = "damages.txt";
 	private static final String idFile = "items.txt";
 	private static final String potionEffectFile = "potioneffects.txt";
 	private ArmorHook armorHook;
 	private PotionListener potionListener;
-	private PlayerJoinListener pjl;
+	//private PlayerJoinListener pjl;
 	private FallListener fl;
 
 	@Override
 	public void onEnable() {
+		
+		if(update())
+			return;
+		
 		getDataFile("config.yml", false);
 
 		boolean b  = false;
@@ -76,6 +84,29 @@ public class ChangeDamagePlugin extends JavaPlugin{
 			getConfig().set("damages.default.DIAMOND_SWORD", 9);
 			b = true;
 		}
+		
+		if(!getConfig().contains("damages.expression")){
+			getConfig().createSection("damages.expression");
+			b = true;
+		}
+
+		if(!getConfig().contains("damages.expression.critical")){
+			getConfig().createSection("damages.expression.critical");
+			getConfig().set("damages.expression.critical", "i 2 / 2 + rand * fl");
+			b = true;
+		}
+		
+		if(!getConfig().contains("damages.expression.weakness")){
+			getConfig().createSection("damages.expression.weakness");
+			getConfig().set("damages.expression.weakness", "i 2 w << -");
+			b = true;
+		}
+		
+		if(!getConfig().contains("damages.expression.strength")){
+			getConfig().createSection("damages.expression.strength");
+			getConfig().set("damages.expression.strength", "i 3 s << +");
+			b = true;
+		}
 
 		if(!getConfig().contains("armor")){
 			getConfig().createSection("armor");
@@ -91,25 +122,14 @@ public class ChangeDamagePlugin extends JavaPlugin{
 			b = true;
 		}
 		
-		if(!getConfig().contains("critical")){
-			getConfig().createSection("critical");
-			b = true;
-		}
-
-		if(!getConfig().contains("critical.equation")){
-			getConfig().createSection("critical.equation");
-			getConfig().set("critical.equation", "2 n 2 - 2 * 2 / +");
-			b = true;
-		}
-		
 		if(!getConfig().contains("fall")){
 			getConfig().createSection("fall");
 			b = true;
 		}
 		
-		if(!getConfig().contains("fall.equation")){
-			getConfig().createSection("fall.equation");
-			getConfig().set("fall.equation", "d 3 - a 0 * +"); //TODO: equation
+		if(!getConfig().contains("fall.expression")){
+			getConfig().createSection("fall.expression");
+			getConfig().set("fall.expression", "d 3 - a 0 * +");
 			b = true;
 		}
 
@@ -146,7 +166,6 @@ public class ChangeDamagePlugin extends JavaPlugin{
 		verbose = getConfig().getBoolean("verbose", false);
 		dl = new DamageListener();
 		fl = new FallListener();
-		loadCriticalHit();
 		try {
 			armorHook = new ArmorHook();
 		} catch (SecurityException e) {
@@ -159,7 +178,7 @@ public class ChangeDamagePlugin extends JavaPlugin{
 		/*potionListener = new PotionListener();*/
 		reload();
 		getServer().getPluginManager().registerEvents(dl, this);
-		getServer().getPluginManager().registerEvents(pjl, this);
+		//getServer().getPluginManager().registerEvents(pjl, this);
 		getServer().getPluginManager().registerEvents(fl, this);
 		/*getServer().getPluginManager().registerEvents(potionListener, this);*/
 	}
@@ -167,11 +186,11 @@ public class ChangeDamagePlugin extends JavaPlugin{
 	private void reload() {
 		dl.clear();
 		armorHook.restore();
-		pjl.close();
+		//pjl.close();
 		/*potionListener.clear();*/
 		loadDamageMap();
 		loadArmor();
-		loadCriticalHit();
+		loadDamageEquations();
 		loadFall();
 		/*loadPotionEffects();*/
 		/*
@@ -214,26 +233,43 @@ public class ChangeDamagePlugin extends JavaPlugin{
 	}
 
 	private void loadFall() {
-		System.out.println("Loading fall config");
+		System.out.println("[ChangeDamage] Loading fall expression");
+		
 		VariablePool pool = new VariablePool(false);
 		Variable d = pool.register("d", 0);
 		Variable a = pool.register("a", 0);
 		String eq = getConfig().getString("fall.equation", "");
 		PostfixNotation expression = ExpressionParser.parsePostfix(eq, pool);
 		fl.setExpression(expression, d, a);
+		
+		fl.setEventPriority(getConfig().getString("fall.priority"));
+		
+		System.out.println("[ChangeDamage] Successfully loaded fall damage");
 	}
 
-	private void loadCriticalHit() {
-		VariablePool pool = new VariablePool(false);
-		Variable n = pool.register("n", 0);
-		String eq = getConfig().getString("critical.equation", "");
-		PostfixNotation notation = ExpressionParser.parsePostfix(eq, pool);
+	private void loadDamageEquations() {
+		System.out.println("[ChangeDamage] Loading damage expressions");
+		VariablePool pool = dl.pool;
+		String[] expressions = {
+				"critical",
+				"strength",
+				"weakness",
+		};
+		for (String string : expressions) {
+			String expression = getConfig().getString("damages.expression." + string);
+			if(verbose)
+				System.out.println("[ChangeDamage] Loading " + string + " expression: " + expression);
+			dl.setEquation(string, ExpressionParser.parsePostfix(expression, pool));
+		}
+		System.out.println("[ChangeDamage] Successfully loaded damage expressions");
+		/*PostfixNotation notation = ExpressionParser.parsePostfix(eq, pool);
 		if(pjl == null)
 			pjl = new PlayerJoinListener(notation, n);
 		else
-			pjl.open(notation, n);
+			pjl.open(notation, n);*/
 	}
 
+	@SuppressWarnings("unused")
 	private void loadPotionEffects() {
 		/* duration */
 		{
@@ -372,6 +408,8 @@ public class ChangeDamagePlugin extends JavaPlugin{
 	private void loadDamageMap(){
 		ConfigurationSection section = getConfig().getConfigurationSection("damages");
 		for(String s : section.getKeys(false)){
+			if(s.equals("priority"))
+				continue;
 			ConfigurationSection sub = section.getConfigurationSection(s);
 			World w = (s.equals("default")) ? null : getServer().getWorld(s);
 			System.out.println("[" + getDescription().getName() + "]Loading damages for world " + ((w == null) ? "default" : w.getName()));
@@ -390,7 +428,42 @@ public class ChangeDamagePlugin extends JavaPlugin{
 				}
 			}
 		}
+		
+		dl.setEventPriority(getConfig().getString("damages.priority", "NORMAL"));
+		
 		System.out.println("[" + getDescription().getName() + "]Successfully loaded damages!");
+	}
+	
+	private boolean update(){
+		String mode = getConfig().getString("update.mode").toLowerCase();
+		String baseURL;
+		if(mode.equals("experimental"))
+			baseURL = experimentalUpdateRepository;
+		else if (mode.equals("stable"))
+			baseURL = stableUpdateRepository;
+		else return false;
+
+		System.out.println("[ChangeDamage] WARNING! ENTERING EXPERIMENTAL AUTOUPDATE MODE. THIS MAY CORRUPT YOUR VERSION OF CHANGEDAMAGE. TO DISABLE THIS, CHANGE update.mode IN CONFIG.YML TO off. PRESS CTRL + C NOW TO FORCE-STOP BUKKIT AND PREVENT THE UPDATE.");
+		System.out.println("[ChangeDamage] WARNING! UPDATE COMMENCING IN 10 SECONDS!!!");
+		try {
+			Thread.sleep(10000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		String tempLoc = getDataFolder() + File.separator + "temp.tmp";
+		String downloadLoc = getFile().toString();
+		String version = getDescription().getVersion();
+		try{
+			Updater.update(baseURL + updateJAR, baseURL + updateVersion, downloadLoc, tempLoc, version);
+			System.out.println("Successfully updated! Reloading...");
+		} catch (Exception ex){
+			System.out.println("Update failed!");
+			ex.printStackTrace();
+		}
+		Bukkit.reload();
+		return true;
+		
 	}
 
 	@Override

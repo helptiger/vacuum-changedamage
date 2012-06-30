@@ -12,7 +12,10 @@ import vacuum.changedamage.ChangeDamagePlugin;
 import vacuum.changedamage.equations.PostfixNotation;
 import vacuum.changedamage.equations.element.number.Variable;
 
+@Deprecated
 public class RandomHook extends Random{
+
+	private static final long serialVersionUID = -8825810946367249961L;
 
 	public static boolean applyHook(Player p, PostfixNotation expression, Variable n){
 		try {
