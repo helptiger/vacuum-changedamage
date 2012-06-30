@@ -12,8 +12,11 @@ import vacuum.changedamage.equations.element.operators.Addition;
 import vacuum.changedamage.equations.element.operators.Ceiling;
 import vacuum.changedamage.equations.element.operators.Division;
 import vacuum.changedamage.equations.element.operators.Floor;
+import vacuum.changedamage.equations.element.operators.LeftShift;
 import vacuum.changedamage.equations.element.operators.Multiplication;
 import vacuum.changedamage.equations.element.operators.Random;
+import vacuum.changedamage.equations.element.operators.RightShiftSigned;
+import vacuum.changedamage.equations.element.operators.RightShiftUnsigned;
 import vacuum.changedamage.equations.element.operators.Round;
 import vacuum.changedamage.equations.element.operators.Subtraction;
 
@@ -41,7 +44,7 @@ public class ExpressionParser {
 			
 			/* operators */
 			try {
-				Class clazz = stringToOperation.get(part);
+				Class<? extends Element> clazz = stringToOperation.get(part);
 				if(clazz != null){
 					Element e = (Element) clazz.newInstance();
 					if(e != null){
@@ -59,7 +62,7 @@ public class ExpressionParser {
 		return new PostfixNotation(elements);
 	}
 
-	private static HashMap<String, Class> stringToOperation = new HashMap<String, Class>();
+	private static HashMap<String, Class<? extends Element>> stringToOperation = new HashMap<String, Class<? extends Element>>();
 
 	static
 	{
@@ -69,6 +72,9 @@ public class ExpressionParser {
 		stringToOperation.put("*", Multiplication.class);
 		stringToOperation.put("x", Multiplication.class);
 		stringToOperation.put("/", Division.class);
+		stringToOperation.put(">>", RightShiftSigned.class);
+		stringToOperation.put(">>>", RightShiftUnsigned.class);
+		stringToOperation.put("<<", LeftShift.class);
 		stringToOperation.put("floor", Floor.class);
 		stringToOperation.put("fl", Floor.class);
 		stringToOperation.put("round", Round.class);

@@ -11,6 +11,7 @@ import vacuum.changedamage.equations.PostfixNotation;
 import vacuum.changedamage.equations.element.number.Variable;
 import vacuum.changedamage.hooks.RandomHook;
 
+@Deprecated
 public class PlayerJoinListener implements Listener{
 	
 	private PostfixNotation expression;

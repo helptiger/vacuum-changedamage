@@ -8,7 +8,9 @@ import net.minecraft.server.ItemArmor;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.inventory.ItemStack;
@@ -23,6 +25,7 @@ public class FallListener implements Listener{
 	private PostfixNotation expression;
 	private Variable d;
 	private Variable a;
+	private EventPriority priority;
 
 	public FallListener(){
 		VariablePool pool = new VariablePool(false);
@@ -30,8 +33,46 @@ public class FallListener implements Listener{
 		expression = ExpressionParser.parsePostfix("d 3 -", pool);
 		this.d = pool.getVariable("d");
 	}
+	
+	public void setEventPriority(String priority){
+		try{
+			this.priority = EventPriority.valueOf(priority.toUpperCase());
+		} catch (Exception ex){
+			this.priority = EventPriority.NORMAL;
+		}
+	}
 
-	@EventHandler
+	@EventHandler(priority=EventPriority.LOWEST)
+	public void onEntityDamagedLOWEST(EntityDamageByEntityEvent evt){
+		if(priority.equals(EventPriority.LOWEST))
+			onEntityDamaged(evt);
+	}
+
+	@EventHandler(priority=EventPriority.LOW)
+	public void onEntityDamagedLOW(EntityDamageByEntityEvent evt){
+		if(priority.equals(EventPriority.LOW))
+			onEntityDamaged(evt);
+	}
+
+	@EventHandler(priority=EventPriority.NORMAL)
+	public void onEntityDamagedNORMAL(EntityDamageByEntityEvent evt){
+		if(priority.equals(EventPriority.NORMAL))
+			onEntityDamaged(evt);
+	}
+
+	@EventHandler(priority=EventPriority.HIGH)
+	public void onEntityDamagedHIGH(EntityDamageByEntityEvent evt){
+		if(priority.equals(EventPriority.HIGH))
+			onEntityDamaged(evt);
+	}
+
+	@EventHandler(priority=EventPriority.HIGHEST)
+	public void onEntityDamagedHIGHEST(EntityDamageByEntityEvent evt){
+		if(priority.equals(EventPriority.HIGHEST))
+			onEntityDamaged(evt);
+	}
+
+	@EventHandler(priority=EventPriority.NORMAL)
 	public void onEntityDamaged(EntityDamageEvent evt){
 		if(evt.getCause().equals(DamageCause.FALL) && evt.getEntity() instanceof Player){
 			int fallDist = evt.getDamage() + 3;
@@ -51,7 +92,6 @@ public class FallListener implements Listener{
 						armorValue += b.getInt(itemArmor);
 				}
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			a.setValue(armorValue);
