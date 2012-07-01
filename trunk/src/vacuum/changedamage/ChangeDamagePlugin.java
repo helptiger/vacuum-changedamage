@@ -90,9 +90,9 @@ public class ChangeDamagePlugin extends JavaPlugin{
 			b = true;
 		}
 
-		if(!getConfig().contains("damages.expression.critical")){
+		if(!getConfig().contains("damages.expression.critical") || getConfig().getString("damages.expression.critical").equals("i 2 / 2 + rand * fl")){
 			getConfig().createSection("damages.expression.critical");
-			getConfig().set("damages.expression.critical", "i 2 / 2 + rand * fl");
+			getConfig().set("damages.expression.critical", "i i 2 / 2 + rand * fl +");
 			b = true;
 		}
 		
