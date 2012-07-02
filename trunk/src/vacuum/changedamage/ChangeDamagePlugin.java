@@ -47,8 +47,9 @@ public class ChangeDamagePlugin extends JavaPlugin{
 	@Override
 	public void onEnable() {
 		
-		if(update())
-			return;
+		//removed due to Bukkit Dev safety rules
+		/*if(update())
+			return;*/
 		
 		getDataFile("config.yml", false);
 
@@ -434,7 +435,9 @@ public class ChangeDamagePlugin extends JavaPlugin{
 		System.out.println("[" + getDescription().getName() + "]Successfully loaded damages!");
 	}
 	
-	private boolean update(){
+	
+	//removed due to Bukkit Dev safety rules
+	/*private boolean update(){
 		String mode = getConfig().getString("update.mode").toLowerCase();
 		String baseURL;
 		if(mode.equals("experimental"))
@@ -464,7 +467,7 @@ public class ChangeDamagePlugin extends JavaPlugin{
 		Bukkit.reload();
 		return true;
 		
-	}
+	}*/
 
 	@Override
 	public void onDisable(){
