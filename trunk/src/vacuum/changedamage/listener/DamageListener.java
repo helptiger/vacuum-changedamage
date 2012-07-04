@@ -1,5 +1,6 @@
 package vacuum.changedamage.listener;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -9,11 +10,27 @@ import net.minecraft.server.EntityPlayer;
 import net.minecraft.server.MobEffectList;
 
 import org.bukkit.World;
+import org.bukkit.craftbukkit.entity.CraftArrow;
+import org.bukkit.craftbukkit.entity.CraftEgg;
+import org.bukkit.craftbukkit.entity.CraftEnderPearl;
 import org.bukkit.craftbukkit.entity.CraftEntity;
+import org.bukkit.craftbukkit.entity.CraftFireball;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
+import org.bukkit.craftbukkit.entity.CraftSmallFireball;
+import org.bukkit.craftbukkit.entity.CraftSnowball;
+import org.bukkit.craftbukkit.entity.CraftThrownExpBottle;
+import org.bukkit.craftbukkit.entity.CraftThrownPotion;
 import org.bukkit.entity.Arrow;
+import org.bukkit.entity.Egg;
+import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Fireball;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
+import org.bukkit.entity.SmallFireball;
+import org.bukkit.entity.Snowball;
+import org.bukkit.entity.ThrownExpBottle;
+import org.bukkit.entity.ThrownPotion;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -24,6 +41,47 @@ import vacuum.changedamage.equations.element.number.Variable;
 import vacuum.changedamage.equations.element.number.VariablePool;
 
 public class DamageListener implements Listener{
+
+	public static final String[] PROJECTILE_TYPES = {
+		"flying_arrow",
+		"thrown_egg",
+		"thrown_ender_pearl",
+		"thrown_small_fireball",
+		"thrown_fireball",
+		"thrown_exp_bottle",
+		"thrown_potion",
+		"thrown_snowball"
+	};
+
+	static {
+		Arrays.sort(PROJECTILE_TYPES);
+	}
+
+	private enum ProjectileType {
+		FLYING_ARROW(CraftArrow.class),
+		THROWN_EGG(CraftEgg.class),
+		THROWN_ENDER_PEARL(CraftEnderPearl.class),
+		THROWN_SMALL_FIREBALL(CraftSmallFireball.class),
+		THROWN_FIREBALL(CraftFireball.class),
+		THROWN_EXP_BOTTLE(CraftThrownExpBottle.class),
+		THROWN_POTION(CraftThrownPotion.class),
+		THROWN_SNOWBALL(CraftSnowball.class);
+
+		private Class<? extends Projectile> clazz;
+
+		private ProjectileType(Class<? extends Projectile> clazz){
+			this.clazz = clazz;
+		}
+
+		public static ProjectileType valueOf(Projectile p){
+			for(ProjectileType t : ProjectileType.values())
+				if(p.getClass().isAssignableFrom(t.clazz)){
+					return t;
+				}
+			System.out.println("[ChangeDamage] Unrecognized projectile: " + p.getClass());
+			return null;
+		}
+	}
 
 	private static Random r = new Random();
 
@@ -38,7 +96,7 @@ public class DamageListener implements Listener{
 	private HashMap<World, HashMap<Integer, Integer>> worldDamageMapMap = new HashMap<World, HashMap<Integer,Integer>>();
 	private boolean pvpOnly = true;
 	boolean verbose;
-	private HashMap<World, Double> worldToArrowDamageMap = new HashMap<World, Double>();
+	private HashMap<World, HashMap<String, Double>> worldToProjectileDamageMap = new HashMap<World, HashMap<String, Double>>();
 	private HashMap<World, Integer> worldToDefaultDamageMap = new HashMap<World, Integer>();
 	private EventPriority priority = EventPriority.NORMAL;
 	private HashMap<String, PostfixNotation> equations = new HashMap<String, PostfixNotation>();
@@ -144,27 +202,41 @@ public class DamageListener implements Listener{
 
 				evt.setDamage(ret);
 				if(verbose)
-					System.out.println("Set damage to " + ret);
+					System.out.println("[ChangeDamage] Set damage to " + ret);
 			}
-		} else if (evt.getDamager() instanceof Arrow){
-			if(!(((Arrow)evt.getDamager()).getShooter() instanceof Player) || ((Player)(((Arrow)evt.getDamager()).getShooter())).hasPermission("vacuum.changedamage.damage"))
+		} else if (evt.getDamager() instanceof Projectile){
+			if(!(((Projectile)evt.getDamager()).getShooter() instanceof Player) || !((Player)((Projectile)evt.getDamager()).getShooter()).hasPermission("vacuum.changedamage.damage"))
 				return;
 
-			Double arrowDamage = 
-					worldToArrowDamageMap
-					.get(
-							evt
-							.getDamager()
-							.getWorld()
-							);
-			if(arrowDamage == null)
+
+			Double damage = null;
+			try{
+				String type = ProjectileType.valueOf((Projectile)evt.getDamager()).toString().toLowerCase();
+				if(verbose)
+					System.out.println("[ChangeDamage] Identified projectile of type " + evt.getDamager().getClass() + " as " + type);
+				HashMap<String, Double> map = worldToProjectileDamageMap.get(evt
+						.getDamager()
+						.getWorld());
+				if(map == null)
+					map = worldToProjectileDamageMap.get(null);
+				if(map == null)
+					return;
+				damage = map.get(type);
+			} catch (Exception ex){
+				ex.printStackTrace();
+			}
+			if(damage == null)
 				return;
-			double raw = evt.getDamage() * arrowDamage;
+			double raw;
+			if(evt.getDamage() != 0)
+				raw = evt.getDamage() * damage;
+			else
+				raw = damage;
 			if(verbose)
-				System.out.println("Raw arrow damage: " + raw);
+				System.out.println("Raw projectile damage: " + raw);
 			evt.setDamage(round(raw));
 			if(verbose)
-				System.out.println("Set arrow damage to " + evt.getDamage());
+				System.out.println("Set projectile damage to " + evt.getDamage());
 		}
 	}
 
@@ -235,7 +307,7 @@ public class DamageListener implements Listener{
 
 	public void clear(){
 		worldDamageMapMap.clear();
-		worldToArrowDamageMap.clear();
+		worldToProjectileDamageMap.clear();
 		worldToDefaultDamageMap.clear();
 		equations.clear();
 	}
@@ -244,8 +316,10 @@ public class DamageListener implements Listener{
 		worldDamageMapMap.get(w).remove(k);
 	}
 
-	public void setArrowDamage(World w, double arrowDamage) {
-		worldToArrowDamageMap.put(w, arrowDamage);
+	public void setProjectileDamage(World w, String type, double damage) {
+		if(!worldToProjectileDamageMap.containsKey(w))
+			worldToProjectileDamageMap.put(w, new HashMap<String, Double>());
+		worldToProjectileDamageMap.get(w).put(type.toLowerCase(), damage);
 	}
 
 	public void setDefaultDamage(World w, int damage){
