@@ -1,15 +1,20 @@
 package vacuum.changedamage.listener;
 
+import java.util.Collection;
 import java.util.HashMap;
 
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
+import org.bukkit.event.entity.PotionSplashEvent;
+import org.bukkit.potion.PotionEffect;
 
+@Deprecated
 public class PotionListener implements Listener{
 
-	private boolean modifyMobDamage;
 	private HashMap<Integer, Double> idToAmplifierMod = new HashMap<Integer, Double>();
 	private HashMap<Integer, Double> idToDurationMod = new HashMap<Integer, Double>();
 	private boolean verbose;
@@ -18,7 +23,7 @@ public class PotionListener implements Listener{
 		//empty constructor
 	}
 
-	/*@EventHandler(priority = EventPriority.NORMAL)
+	@EventHandler(priority = EventPriority.NORMAL)
 	public void onPotionSplash(PotionSplashEvent evt){
 		if(verbose)
 			System.out.println("Splash potion detected");
@@ -38,7 +43,7 @@ public class PotionListener implements Listener{
 			}
 			effects.add(new PotionEffect(effectsAr[i].getType(), duration, amplifier));
 		}
-	}*/
+	}
 	
 	public void onEntityDamaged(EntityDamageEvent evt){
 		if(evt.getCause().equals(DamageCause.MAGIC)){
@@ -53,13 +58,8 @@ public class PotionListener implements Listener{
 	}
 
 	public void clear(){
-		modifyMobDamage = false;
 		idToAmplifierMod.clear();
 		idToDurationMod.clear();
-	}
-
-	public void setPVPOnly(boolean pvponly){
-		modifyMobDamage = !pvponly;
 	}
 
 	public void putAmplifier(int id, double modifier) {
