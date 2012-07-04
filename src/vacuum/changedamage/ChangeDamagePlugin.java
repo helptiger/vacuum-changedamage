@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
@@ -174,26 +175,22 @@ public class ChangeDamagePlugin extends JavaPlugin{
 
 	private void reload() {
 		dl.clear();
-		armorHook.restore();/*
-		if(potionHook != null) //FIXME: remove comment
-			potionHook.releaseHook();*/
-		//pjl.close();
-		/*potionListener.clear();*/
+		armorHook.restore();
+		//if(potionHook != null) //FIXME: remove comment
+		//	potionHook.releaseHook();
 		loadDamageMap();
 		loadArmor();
 		loadDamageEquations();
 		loadFall();
-		/*try{
-			loadPotionEffects();//FIXME: remove comment
+		try{
+			//loadPotionEffects();//FIXME: remove comment
 		} catch (Exception ex){
 			ex.printStackTrace();
-		}*/
+		}
 
 		boolean pvpOnly = getConfig().getBoolean("pvponly", true);
 		dl.setPVPOnly(pvpOnly);
 		dl.setVerbose(verbose);
-		/*potionListener.setPVPOnly(pvpOnly);
-		potionListener.setVerbose(verbose);*/
 		//		dl.setDefaultDamage(null, getConfig().getInt("defaultdamage", -1));
 	}
 
@@ -372,15 +369,28 @@ public class ChangeDamagePlugin extends JavaPlugin{
 				continue;
 			ConfigurationSection sub = section.getConfigurationSection(s);
 			World w = (s.equals("default")) ? null : getServer().getWorld(s);
-			System.out.println("[" + getDescription().getName() + "]Loading damages for world " + ((w == null) ? "default" : w.getName()));
+			System.out.println("[" + getDescription().getName() + "] Loading damages for world " + ((w == null) ? "default" : w.getName()));
 			for(String str : sub.getKeys(false)){
 				try{
-					if(str.equalsIgnoreCase("FLYING_ARROW")){
-						dl.setArrowDamage(w, sub.getDouble(str));
+					if(verbose){
+						System.out.println("[ChangeDamage] Loading " + str + " with value " + sub.getString(str));
+					}
+					int i;
+					if((i = Arrays.binarySearch(DamageListener.PROJECTILE_TYPES, str.toLowerCase())) >= 0){
+						dl.setProjectileDamage(w, DamageListener.PROJECTILE_TYPES[i], sub.getDouble(str));
+						if(verbose){
+							System.out.println("[ChangeDamage] Loaded as projectile");
+						}
 					} else if (str.equalsIgnoreCase("default")){
 						dl.setDefaultDamage(w, sub.getInt(str));
+						if(verbose){
+							System.out.println("[ChangeDamage] Loaded as default damage");
+						}
 					} else {
 						dl.put(w, getID(str, idFile), sub.getInt(str));
+						if(verbose){
+							System.out.println("[ChangeDamage] Loaded as item");
+						}
 					}
 				} catch (Exception ex){
 					ex.printStackTrace();
