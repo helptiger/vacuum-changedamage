@@ -8,9 +8,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 
-import org.bukkit.Bukkit;
+import net.minecraft.server.MobEffect;
+
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -22,35 +27,37 @@ import vacuum.changedamage.equations.PostfixNotation;
 import vacuum.changedamage.equations.element.number.Variable;
 import vacuum.changedamage.equations.element.number.VariablePool;
 import vacuum.changedamage.hooks.ArmorHook;
+import vacuum.changedamage.hooks.PotionHook;
 import vacuum.changedamage.listener.DamageListener;
 import vacuum.changedamage.listener.FallListener;
-import vacuum.changedamage.listener.PotionListener;
 
 public class ChangeDamagePlugin extends JavaPlugin{
 
 	private static final String fileRepository = "http://vacuum-changedamage.googlecode.com/svn/trunk/resources/";
-	private static final String experimentalUpdateRepository = fileRepository + "jars/experimental/";
+	/*	private static final String experimentalUpdateRepository = fileRepository + "jars/experimental/";
 	private static final String stableUpdateRepository = fileRepository + "jars/stable/";
 	private static final String updateJAR = "ChangeDamage.jar";
-	private static final String updateVersion = "version.txt";
+	private static final String updateVersion = "version.txt";*/
 
 	public static boolean research = false;
 	private DamageListener dl;
 	private boolean verbose;
 	private static final String idFile = "items.txt";
 	private static final String potionEffectFile = "potioneffects.txt";
+	private static final String potionIDFile = "potions.txt";
+
 	private ArmorHook armorHook;
-	private PotionListener potionListener;
-	//private PlayerJoinListener pjl;
 	private FallListener fl;
+
+	private PotionHook potionHook;
 
 	@Override
 	public void onEnable() {
-		
+
 		//removed due to Bukkit Dev safety rules
 		/*if(update())
 			return;*/
-		
+
 		getDataFile("config.yml", false);
 
 		boolean b  = false;
@@ -66,9 +73,8 @@ public class ChangeDamagePlugin extends JavaPlugin{
 			b = true;
 		}
 
-		if(!getConfig().contains("research")){
-			getConfig().createSection("research");
-			getConfig().set("research", true);
+		if(getConfig().contains("research")){
+			getConfig().set("research", null);
 			b = true;
 		}
 
@@ -85,7 +91,7 @@ public class ChangeDamagePlugin extends JavaPlugin{
 			getConfig().set("damages.default.DIAMOND_SWORD", 9);
 			b = true;
 		}
-		
+
 		if(!getConfig().contains("damages.expression")){
 			getConfig().createSection("damages.expression");
 			b = true;
@@ -96,13 +102,13 @@ public class ChangeDamagePlugin extends JavaPlugin{
 			getConfig().set("damages.expression.critical", "i i 2 / 2 + rand * fl +");
 			b = true;
 		}
-		
+
 		if(!getConfig().contains("damages.expression.weakness")){
 			getConfig().createSection("damages.expression.weakness");
 			getConfig().set("damages.expression.weakness", "i 2 w << -");
 			b = true;
 		}
-		
+
 		if(!getConfig().contains("damages.expression.strength")){
 			getConfig().createSection("damages.expression.strength");
 			getConfig().set("damages.expression.strength", "i 3 s << +");
@@ -122,40 +128,22 @@ public class ChangeDamagePlugin extends JavaPlugin{
 			getConfig().set("armor.default.DIAMOND_CHESTPLATE", 8);
 			b = true;
 		}
-		
+
 		if(!getConfig().contains("fall")){
 			getConfig().createSection("fall");
 			b = true;
 		}
-		
+
 		if(!getConfig().contains("fall.expression")){
 			getConfig().createSection("fall.expression");
 			getConfig().set("fall.expression", "d 3 - a 0 * +");
 			b = true;
 		}
 
-		/*if(!getConfig().contains("potion")){
+		if(!getConfig().contains("potion")){
 			getConfig().createSection("potion");
 			b = true;
 		}
-
-		if(!getConfig().contains("potion.duration")){
-			getConfig().createSection("potion.duration.default");
-
-			//put some values in
-			getConfig().createSection("potion.duration.default.HEAL");
-			getConfig().set("potion.duration.default.HEAL", 1.0);
-			b = true;
-		}
-
-		if(!getConfig().contains("potion.amplifier")){
-			getConfig().createSection("potion.amplifier.default");
-
-			//put some values in
-			getConfig().createSection("potion.amplifier.default.HEAL");
-			getConfig().set("potion.amplifier.default.HEAL", 1.0);
-			b = true;
-		}*/
 
 		if(b)
 			try {
@@ -186,45 +174,21 @@ public class ChangeDamagePlugin extends JavaPlugin{
 
 	private void reload() {
 		dl.clear();
-		armorHook.restore();
+		armorHook.restore();/*
+		if(potionHook != null) //FIXME: remove comment
+			potionHook.releaseHook();*/
 		//pjl.close();
 		/*potionListener.clear();*/
 		loadDamageMap();
 		loadArmor();
 		loadDamageEquations();
 		loadFall();
-		/*loadPotionEffects();*/
-		/*
-		File f = getDataFile(damageFile, true);
-		try {
-			Scanner s = new Scanner(f);
-			while(s.hasNext()){
-				String line = s.nextLine();
-				try {
-					String name = line.substring(0, line.indexOf(' ')).toUpperCase().replace(" ", "_");
-					if(name.equals("FLYING_ARROW")){
-						dl.setArrowDamage(null, Double.parseDouble(line.substring(line.indexOf(' ') + 1)));
-						continue;
-					}
-					int id = getID(name);
-					if(id == -1){
-						System.out.println("Failed to find item " + name);
-						continue;
-					}
-					int damage = Integer.parseInt(line.substring(line.indexOf(' ') + 1));
-					dl.put(null, id, damage);
-					if(verbose)
-						System.out.println("Put " + id + ", " + damage);
-				} catch (Throwable t){
-					//there was some funny syntax
-					t.printStackTrace();
-					System.err.println("[" + getDescription().getName() + "] File syntax error in id file. Skipping...");
-				}
-			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+		/*try{
+			loadPotionEffects();//FIXME: remove comment
+		} catch (Exception ex){
+			ex.printStackTrace();
 		}*/
-		research = getConfig().getBoolean("research", true);
+
 		boolean pvpOnly = getConfig().getBoolean("pvponly", true);
 		dl.setPVPOnly(pvpOnly);
 		dl.setVerbose(verbose);
@@ -235,16 +199,16 @@ public class ChangeDamagePlugin extends JavaPlugin{
 
 	private void loadFall() {
 		System.out.println("[ChangeDamage] Loading fall expression");
-		
+
 		VariablePool pool = new VariablePool(false);
 		Variable d = pool.register("d", 0);
 		Variable a = pool.register("a", 0);
-		String eq = getConfig().getString("fall.equation", "");
+		String eq = getConfig().getString("fall.expression", "");
 		PostfixNotation expression = ExpressionParser.parsePostfix(eq, pool);
 		fl.setExpression(expression, d, a);
-		
+
 		fl.setEventPriority(getConfig().getString("fall.priority"));
-		
+
 		System.out.println("[ChangeDamage] Successfully loaded fall damage");
 	}
 
@@ -270,43 +234,38 @@ public class ChangeDamagePlugin extends JavaPlugin{
 			pjl.open(notation, n);*/
 	}
 
-	@SuppressWarnings("unused")
 	private void loadPotionEffects() {
-		/* duration */
-		{
-			ConfigurationSection section = getConfig().getConfigurationSection("potion.duration");
-			for(String s : section.getKeys(false)){
-				ConfigurationSection sub = section.getConfigurationSection(s);
-				World w = (s.equals("default")) ? null : getServer().getWorld(s);
-				System.out.println("[" + getDescription().getName() + "]Loading potion effects for world " + ((w == null) ? "default" : w.getName()));
-				for(String str : sub.getKeys(false)){
-					try{
-						potionListener.putDuration(getID(str, potionEffectFile), sub.getDouble(str));
-					} catch (Exception ex){
-						ex.printStackTrace();
-						System.out.println("[" + getDescription().getName() + "]Configuration node potion." + s + "." + str + " is causing an issue.");
-					}
-				}
+		System.out.println("[" + getDescription().getName() + "] Loading potion effects.");
+		HashMap<Integer, List<MobEffect>> customEffects = new HashMap<Integer, List<MobEffect>>();
+		ConfigurationSection section = getConfig().getConfigurationSection("potion");
+		for(String str : section.getKeys(false)){ /* load each potion ID */
+			int id = getID(str, potionIDFile);
+			ConfigurationSection sub = section.getConfigurationSection(str);
+			Set<String> keys = sub.getKeys(false);
+			List<MobEffect> effects = new ArrayList<MobEffect>(keys.size());
+			for(String string : keys){ /* load effects */
+				ConfigurationSection subsub = sub.getConfigurationSection(string);
+				int effectID = getID(string, potionEffectFile);
+				int amplifier = 1;
+				int duration = 0;
+
+				if(subsub.contains("amplifier")){
+					amplifier = subsub.getInt("amplifier");
+				} else
+					System.out.println("[ChangeDamage] WARNING! Amplifier not specified for potion ID: " + id + "; effect ID: " + effectID);
+
+				if(subsub.contains("duration")){
+					duration = subsub.getInt("duration");
+				} else
+					System.out.println("[ChangeDamage] WARNING! Duration not specified for potion ID: " + id + "; effect ID: " + effectID);
+
+				MobEffect effect = new MobEffect(effectID, amplifier, duration);
+				effects.add(effect);
 			}
+			customEffects.put(id, effects);
 		}
-		/* amplifier */
-		{
-			ConfigurationSection section = getConfig().getConfigurationSection("potion.amplifier");
-			for(String s : section.getKeys(false)){
-				ConfigurationSection sub = section.getConfigurationSection(s);
-				World w = (s.equals("default")) ? null : getServer().getWorld(s);
-				System.out.println("[" + getDescription().getName() + "]Loading potion effects for world " + ((w == null) ? "default" : w.getName()));
-				for(String str : sub.getKeys(false)){
-					try{
-						potionListener.putAmplifier(getID(str, potionEffectFile), sub.getDouble(str));
-					} catch (Exception ex){
-						ex.printStackTrace();
-						System.out.println("[" + getDescription().getName() + "]Configuration node potion." + s + "." + str + " is causing an issue.");
-					}
-				}
-			}
-		}
-		System.out.println("[" + getDescription().getName() + "]Successfully loaded potion effects!");
+		potionHook = new PotionHook(customEffects);
+		System.out.println("[" + getDescription().getName() + "] Successfully loaded potion effects!");
 
 	}
 
@@ -429,13 +388,13 @@ public class ChangeDamagePlugin extends JavaPlugin{
 				}
 			}
 		}
-		
+
 		dl.setEventPriority(getConfig().getString("damages.priority", "NORMAL"));
-		
+
 		System.out.println("[" + getDescription().getName() + "]Successfully loaded damages!");
 	}
-	
-	
+
+
 	//removed due to Bukkit Dev safety rules
 	/*private boolean update(){
 		String mode = getConfig().getString("update.mode").toLowerCase();
@@ -453,7 +412,7 @@ public class ChangeDamagePlugin extends JavaPlugin{
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		
+
 		String tempLoc = getDataFolder() + File.separator + "temp.tmp";
 		String downloadLoc = getFile().toString();
 		String version = getDescription().getVersion();
@@ -466,7 +425,7 @@ public class ChangeDamagePlugin extends JavaPlugin{
 		}
 		Bukkit.reload();
 		return true;
-		
+
 	}*/
 
 	@Override

@@ -57,7 +57,7 @@ public class ExpressionParser {
 			} catch (IllegalAccessException e) {
 				e.printStackTrace();
 			}
-			throw new ElementFormatException(part);
+			throw new ElementFormatException("Element: " + part + " expression: " + eq + " index: " + i);
 		}
 		return new PostfixNotation(elements);
 	}
