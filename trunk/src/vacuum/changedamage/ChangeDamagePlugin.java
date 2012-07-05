@@ -17,6 +17,7 @@ import java.util.Set;
 
 import net.minecraft.server.MobEffect;
 
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -43,7 +44,7 @@ public class ChangeDamagePlugin extends JavaPlugin{
 	public static boolean research = false;
 	private DamageListener dl;
 	public static boolean verbose;
-	private static final String idFile = "items.txt";
+	//private static final String idFile = "items.txt";
 	private static final String potionEffectFile = "potioneffects.txt";
 	private static final String potionIDFile = "potions.txt";
 
@@ -285,7 +286,13 @@ public class ChangeDamagePlugin extends JavaPlugin{
 			System.out.println("[" + getDescription().getName() + "] Loading armor modifications for world " + ((w == null) ? "default" : w.getName()));
 			for(String str : sub.getKeys(false)){
 				try{
-					armorHook.modifyArmorValue(getID(str, idFile), sub.getInt(str));
+					int i;
+					try{
+						i = Integer.parseInt(str);
+					} catch (NumberFormatException ex){
+						i = Material.getMaterial(str).getId();
+					}
+					armorHook.modifyArmorValue(i, sub.getInt(str));
 				} catch (Exception ex){
 					ex.printStackTrace();
 					System.out.println("[" + getDescription().getName() + "] Configuration node armor." + s + "." + str + " is causing an issue.");
@@ -335,6 +342,7 @@ public class ChangeDamagePlugin extends JavaPlugin{
 					System.err.println("[" + getDescription().getName() + "] File syntax error in id file. Skipping...");
 				}
 			}
+			s.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -398,7 +406,12 @@ public class ChangeDamagePlugin extends JavaPlugin{
 							System.out.println("[ChangeDamage] Loaded as default damage");
 						}
 					} else {
-						dl.put(w, getID(str, idFile), sub.getInt(str));
+						try{
+							i = Integer.parseInt(str);
+						} catch (NumberFormatException ex){
+							i = Material.getMaterial(str).getId();
+						}
+						dl.put(w, i, sub.getInt(str));
 						if(verbose){
 							System.out.println("[ChangeDamage] Loaded as item");
 						}
