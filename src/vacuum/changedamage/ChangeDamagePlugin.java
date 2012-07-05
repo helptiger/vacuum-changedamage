@@ -42,7 +42,7 @@ public class ChangeDamagePlugin extends JavaPlugin{
 
 	public static boolean research = false;
 	private DamageListener dl;
-	private boolean verbose;
+	public static boolean verbose;
 	private static final String idFile = "items.txt";
 	private static final String potionEffectFile = "potioneffects.txt";
 	private static final String potionIDFile = "potions.txt";
@@ -143,6 +143,7 @@ public class ChangeDamagePlugin extends JavaPlugin{
 
 		if(!getConfig().contains("potion")){
 			getConfig().createSection("potion");
+			getConfig().createSection("potion.0");
 			b = true;
 		}
 
@@ -174,10 +175,13 @@ public class ChangeDamagePlugin extends JavaPlugin{
 	}
 
 	private void reload() {
+		/* unload */
 		dl.clear();
 		armorHook.restore();
 		//if(potionHook != null) //FIXME: remove comment
-		//	potionHook.releaseHook();
+			//potionHook.releaseHook();
+		
+		/* load */
 		loadDamageMap();
 		loadArmor();
 		loadDamageEquations();
@@ -237,6 +241,7 @@ public class ChangeDamagePlugin extends JavaPlugin{
 		ConfigurationSection section = getConfig().getConfigurationSection("potion");
 		for(String str : section.getKeys(false)){ /* load each potion ID */
 			int id = getID(str, potionIDFile);
+			System.out.println("[ChangeDamage] Loading potion with ID: " + id);
 			ConfigurationSection sub = section.getConfigurationSection(str);
 			Set<String> keys = sub.getKeys(false);
 			List<MobEffect> effects = new ArrayList<MobEffect>(keys.size());
@@ -255,13 +260,19 @@ public class ChangeDamagePlugin extends JavaPlugin{
 					duration = subsub.getInt("duration");
 				} else
 					System.out.println("[ChangeDamage] WARNING! Duration not specified for potion ID: " + id + "; effect ID: " + effectID);
-
+				
+				if(verbose)
+					System.out.println("[ChangeDamage] Adding effect: " + effectID + "; amplifier: " + amplifier + "; duration: " + duration);
+				
 				MobEffect effect = new MobEffect(effectID, amplifier, duration);
 				effects.add(effect);
 			}
 			customEffects.put(id, effects);
 		}
 		potionHook = new PotionHook(customEffects);
+		if(verbose){
+			System.out.println("Successful: " + (net.minecraft.server.Item.POTION instanceof PotionHook));
+		}
 		System.out.println("[" + getDescription().getName() + "] Successfully loaded potion effects!");
 
 	}
@@ -365,7 +376,7 @@ public class ChangeDamagePlugin extends JavaPlugin{
 	private void loadDamageMap(){
 		ConfigurationSection section = getConfig().getConfigurationSection("damages");
 		for(String s : section.getKeys(false)){
-			if(s.equals("priority"))
+			if(s.equals("priority") || s.equals("expression"))
 				continue;
 			ConfigurationSection sub = section.getConfigurationSection(s);
 			World w = (s.equals("default")) ? null : getServer().getWorld(s);

@@ -33,7 +33,7 @@ public class FallListener implements Listener{
 		expression = ExpressionParser.parsePostfix("d 3 -", pool);
 		this.d = pool.getVariable("d");
 	}
-	
+
 	public void setEventPriority(String priority){
 		try{
 			this.priority = EventPriority.valueOf(priority.toUpperCase());
@@ -91,7 +91,10 @@ public class FallListener implements Listener{
 					if(itemArmor != null)
 						armorValue += b.getInt(itemArmor);
 				}
-			} catch (Exception e) {
+			} catch(ClassCastException e){
+				//do nothing
+			}
+			catch (Exception e) {
 				e.printStackTrace();
 			}
 			a.setValue(armorValue);
