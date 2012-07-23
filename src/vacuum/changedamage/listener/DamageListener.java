@@ -15,6 +15,7 @@ import org.bukkit.craftbukkit.entity.CraftEgg;
 import org.bukkit.craftbukkit.entity.CraftEnderPearl;
 import org.bukkit.craftbukkit.entity.CraftEntity;
 import org.bukkit.craftbukkit.entity.CraftFireball;
+import org.bukkit.craftbukkit.entity.CraftFish;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.craftbukkit.entity.CraftSmallFireball;
 import org.bukkit.craftbukkit.entity.CraftSnowball;
@@ -42,7 +43,8 @@ public class DamageListener implements Listener{
 		"thrown_fireball",
 		"thrown_exp_bottle",
 		"thrown_potion",
-		"thrown_snowball"
+		"thrown_snowball",
+		"flying_fish"
 	};
 
 	static {
@@ -57,7 +59,8 @@ public class DamageListener implements Listener{
 		THROWN_FIREBALL(CraftFireball.class),
 		THROWN_EXP_BOTTLE(CraftThrownExpBottle.class),
 		THROWN_POTION(CraftThrownPotion.class),
-		THROWN_SNOWBALL(CraftSnowball.class);
+		THROWN_SNOWBALL(CraftSnowball.class),
+		FLYING_FISH(CraftFish.class);
 
 		private Class<? extends Projectile> clazz;
 
@@ -140,6 +143,8 @@ public class DamageListener implements Listener{
 	}
 
 	public void entityDamaged(EntityDamageByEntityEvent evt){
+		if(!(evt.getEntity() instanceof org.bukkit.entity.LivingEntity))
+			return;
 		Player p;
 		if(evt.getDamager() instanceof Player){
 			if(!((Player)evt.getDamager()).hasPermission("vacuum.changedamage.damage"))
@@ -156,7 +161,11 @@ public class DamageListener implements Listener{
 				damageMap = worldDamageMapMap.get(null);
 
 			/* get a value for the item */
-			Integer ret = damageMap.get(item);
+			Integer ret;
+			if(damageMap == null)
+				ret = null;
+			else
+				ret = damageMap.get(item);
 
 			if(verbose)
 				System.out.println("Damage for type " + item + " was " + ret);
@@ -215,7 +224,8 @@ public class DamageListener implements Listener{
 					return;
 				damage = map.get(type);
 			} catch (Exception ex){
-				ex.printStackTrace();
+				if(!(ex instanceof NullPointerException))
+					ex.printStackTrace();
 			}
 			if(damage == null)
 				return;

@@ -306,6 +306,8 @@ public class ChangeDamagePlugin extends JavaPlugin{
 	public boolean onCommand(CommandSender sender, Command command,
 			String label, String[] args) {
 		if(command.getName().equalsIgnoreCase("changedamage")){
+			if(args == null || args.length == 0)
+				return false;
 			if(args[0].equalsIgnoreCase("release")){
 				this.getPluginLoader().disablePlugin(this);
 			} else if(args[0].equalsIgnoreCase("reload")){
