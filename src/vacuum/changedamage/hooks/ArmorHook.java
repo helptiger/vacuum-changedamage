@@ -3,16 +3,19 @@ package vacuum.changedamage.hooks;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import net.minecraft.server.Item;
 import net.minecraft.server.ItemArmor;
 
 public class ArmorHook {
-	
+
 	private HashMap<ItemArmor, Integer> oldValues = new HashMap<ItemArmor, Integer>();
 
 	private Field b;
-	
+
 	public ArmorHook() throws SecurityException, NoSuchFieldException, IllegalAccessException{
 		Class<ItemArmor> itemArmor = ItemArmor.class;
 		b = itemArmor.getField("b");
@@ -28,7 +31,9 @@ public class ArmorHook {
 			try {
 				val = b.getInt(i);
 				b.set(i, value);
-				oldValues.put((ItemArmor) i, val);
+				synchronized (oldValues) {
+					oldValues.put((ItemArmor) i, val);
+				}
 			} catch (IllegalArgumentException e) {
 				e.printStackTrace();
 			} catch (IllegalAccessException e) {
@@ -38,17 +43,25 @@ public class ArmorHook {
 			throw new IllegalArgumentException("Invalid armor ID: " + id);
 		}
 	}
-	
+
 	public void restore(){
-		for(ItemArmor i : oldValues.keySet()){
-			try {
-				System.out.println("Restoring " + i + " to " + oldValues.get(i));
-				b.set(i, oldValues.get(i));
-				oldValues.remove(i);
-			} catch (IllegalArgumentException e) {
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				e.printStackTrace();
+		synchronized (oldValues) {
+			Set<Entry<ItemArmor, Integer>> entries;
+			entries = oldValues.entrySet();
+			Iterator<Entry<ItemArmor, Integer>> it = entries.iterator();
+			while(it.hasNext()){
+				try{
+				Entry<ItemArmor, Integer> entry = it.next();
+					System.out.println("Restoring " + entry.getKey().getName() + " to " + entry.getValue());
+					b.set(entry.getKey(), entry.getValue());
+					oldValues.remove(entry.getKey());
+				} catch (Exception ex) {
+					try{
+						it.remove();
+					} catch (Exception ex2){
+						return;
+					}
+				}
 			}
 		}
 	}
