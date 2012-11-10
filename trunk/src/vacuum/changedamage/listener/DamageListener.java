@@ -276,13 +276,13 @@ public class DamageListener implements Listener{
 			System.out.println("Strength result: " + damage.getValue());
 
 		/* apply enchantment */
-		damage.setValue(damage.getValue() + EnchantmentManager.a(mcPlayer.inventory, (EntityLiving)((CraftEntity)entity).getHandle()));
+		damage.setValue(damage.getValue() + EnchantmentManager.a(mcPlayer, (EntityLiving)((CraftEntity)entity).getHandle()));
 
 		if(verbose)
 			System.out.println("Enchantment result: " + damage.getValue());
 
 		/* apply critical */
-		if((mcPlayer.fallDistance > 0.0F) && (!mcPlayer.onGround) && (!mcPlayer.f_()) && (!mcPlayer.H()) && (!mcPlayer.hasEffect(MobEffectList.BLINDNESS)) && (mcPlayer.vehicle == null) && ((entity instanceof EntityLiving))){
+		if((mcPlayer.fallDistance > 0.0F) && (!mcPlayer.onGround) && (!mcPlayer.g_()) && (!mcPlayer.H()) && (!mcPlayer.hasEffect(MobEffectList.BLINDNESS)) && (mcPlayer.vehicle == null) && (((CraftEntity)entity).getHandle() instanceof EntityLiving)){
 			if(equations.containsKey("critical")){
 				pool.getVariable("d").setValue(mcPlayer.fallDistance);
 				damage.setValue(equations.get("critical").evaluate());

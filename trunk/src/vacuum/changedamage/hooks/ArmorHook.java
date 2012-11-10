@@ -12,13 +12,15 @@ import net.minecraft.server.ItemArmor;
 
 public class ArmorHook {
 
+	public static final String FIELD_NAME = "b";
+
 	private HashMap<ItemArmor, Integer> oldValues = new HashMap<ItemArmor, Integer>();
 
 	private Field b;
 
 	public ArmorHook() throws SecurityException, NoSuchFieldException, IllegalAccessException{
 		Class<ItemArmor> itemArmor = ItemArmor.class;
-		b = itemArmor.getField("b");
+		b = itemArmor.getField(FIELD_NAME);
 		Field modifiersField = Field.class.getDeclaredField("modifiers");
 		modifiersField.setAccessible(true);
 		modifiersField.setInt(b, b.getModifiers() & ~Modifier.FINAL);
