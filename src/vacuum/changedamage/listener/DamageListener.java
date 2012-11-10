@@ -16,6 +16,7 @@ import org.bukkit.craftbukkit.entity.CraftEnderPearl;
 import org.bukkit.craftbukkit.entity.CraftEntity;
 import org.bukkit.craftbukkit.entity.CraftFireball;
 import org.bukkit.craftbukkit.entity.CraftFish;
+import org.bukkit.craftbukkit.entity.CraftLargeFireball;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.craftbukkit.entity.CraftSmallFireball;
 import org.bukkit.craftbukkit.entity.CraftSnowball;
@@ -44,7 +45,8 @@ public class DamageListener implements Listener{
 		"thrown_exp_bottle",
 		"thrown_potion",
 		"thrown_snowball",
-		"flying_fish"
+		"flying_fish",
+		"large_fireball"
 	};
 
 	static {
@@ -60,7 +62,8 @@ public class DamageListener implements Listener{
 		THROWN_EXP_BOTTLE(CraftThrownExpBottle.class),
 		THROWN_POTION(CraftThrownPotion.class),
 		THROWN_SNOWBALL(CraftSnowball.class),
-		FLYING_FISH(CraftFish.class);
+		FLYING_FISH(CraftFish.class),
+		LARGE_FIREBALL(CraftLargeFireball.class);
 
 		private Class<? extends Projectile> clazz;
 
