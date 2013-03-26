@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
-import net.minecraft.server.MobEffect;
+import net.minecraft.server.v1_5_R2.MobEffect;
 
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -272,7 +272,7 @@ public class ChangeDamagePlugin extends JavaPlugin{
 		}
 		potionHook = new PotionHook(customEffects);
 		if(verbose){
-			System.out.println("Successful: " + (net.minecraft.server.Item.POTION instanceof PotionHook));
+			System.out.println("Successful: " + (net.minecraft.server.v1_5_R2.Item.POTION instanceof PotionHook));
 		}
 		System.out.println("[" + getDescription().getName() + "] Successfully loaded potion effects!");
 

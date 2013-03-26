@@ -3,8 +3,8 @@ package vacuum.changedamage.listener;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
-import net.minecraft.server.Item;
-import net.minecraft.server.ItemArmor;
+import net.minecraft.server.v1_5_R2.Item;
+import net.minecraft.server.v1_5_R2.ItemArmor;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
