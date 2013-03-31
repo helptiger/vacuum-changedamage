@@ -19,7 +19,6 @@ import vacuum.changedamage.equations.ExpressionParser;
 import vacuum.changedamage.equations.PostfixNotation;
 import vacuum.changedamage.equations.element.number.Variable;
 import vacuum.changedamage.equations.element.number.VariablePool;
-import vacuum.changedamage.hooks.ArmorHook;
 
 public class FallListener implements Listener{
 
@@ -83,7 +82,7 @@ public class FallListener implements Listener{
 			ItemStack[] armor = ((Player)evt.getEntity()).getInventory().getArmorContents();
 			Field b;
 			try {
-				b = ItemArmor.class.getField(ArmorHook.FIELD_NAME);
+				b = ItemArmor.class.getField("b");
 				Field modifiersField = Field.class.getDeclaredField("modifiers");
 				modifiersField.setAccessible(true);
 				modifiersField.setInt(b, b.getModifiers() & ~Modifier.FINAL);
