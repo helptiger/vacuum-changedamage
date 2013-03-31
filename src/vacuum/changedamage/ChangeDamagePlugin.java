@@ -290,13 +290,7 @@ public class ChangeDamagePlugin extends JavaPlugin{
 					try{
 						i = Integer.parseInt(str);
 					} catch (NumberFormatException ex){
-						try{
 						i = Material.getMaterial(str).getId();
-						} catch (NullPointerException ex2) {
-							System.err.println("Error parsing: " + str + ": " + sub.getString(str));
-							ex2.printStackTrace();
-							continue;
-						}
 					}
 					armorHook.modifyArmorValue(i, sub.getInt(str));
 				} catch (Exception ex){

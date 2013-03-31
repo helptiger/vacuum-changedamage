@@ -25,30 +25,3 @@ permissions:
   vacuum.changedamage.damage:
     description: Change damage of those with this permission
     default: true
-name: ChangeDamage
-version: 1.8.1
-description: Change damage done by an item
-author: FalseVacuum
-authors: [FalseVacuum] 
-website: http://dev.bukkit.org/server-mods/changedamage/
-
-main: vacuum.changedamage.ChangeDamagePlugin
-database: false
-depend: []
-
-commands:
-  changedamage:
-    description: Access changedamage commands
-    permission: vacuum.changedamage
-    usage: |
-      /<command> [[release][reload]]
-      Example: /<command> reload - Reload the plugin
-      Example: /<command> release - Disable the plugin
-  
-permissions:
-  vacuum.changedamage:
-    description: Access ChangeDamage commands
-    default: op
-  vacuum.changedamage.damage:
-    description: Change damage of those with this permission
-    default: true
