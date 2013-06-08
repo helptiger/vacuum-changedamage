@@ -3,8 +3,13 @@ package vacuum.changedamage.hooks;
 import java.lang.reflect.Field;
 import java.util.Random;
 
+<<<<<<< .mine
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftPlayer;
+=======
 import org.bukkit.craftbukkit.v1_5_R2.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_5_R2.entity.CraftPlayer;
+>>>>>>> .r52
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
@@ -35,7 +40,11 @@ public class RandomHook extends Random{
 
 	public static boolean removeHook(Player p){
 		try {
+<<<<<<< .mine
+			Field random = net.minecraft.server.v1_5_R3.Entity.class.getDeclaredField("random");
+=======
 			Field random = net.minecraft.server.v1_5_R2.Entity.class.getDeclaredField("random");
+>>>>>>> .r52
 			random.setAccessible(true);
 			random.set(((CraftPlayer)p).getHandle(), new Random());
 			return true;
@@ -54,7 +63,11 @@ public class RandomHook extends Random{
 
 	private RandomHook(Entity entity, PostfixNotation expression, Variable n) throws SecurityException, NoSuchFieldException, IllegalAccessException{
 		super();
+<<<<<<< .mine
+		Field random = net.minecraft.server.v1_5_R3.Entity.class.getDeclaredField("random");
+=======
 		Field random = net.minecraft.server.v1_5_R2.Entity.class.getDeclaredField("random");
+>>>>>>> .r52
 		random.setAccessible(true);
 		random.set(((CraftEntity)entity).getHandle(), this);
 		this.expression = expression;

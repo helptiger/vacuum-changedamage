@@ -6,6 +6,15 @@ import java.util.List;
 import vacuum.changedamage.ChangeDamagePlugin;
 
 
+<<<<<<< .mine
+import net.minecraft.server.v1_5_R3.EntityHuman;
+import net.minecraft.server.v1_5_R3.EnumAnimation;
+import net.minecraft.server.v1_5_R3.Item;
+import net.minecraft.server.v1_5_R3.ItemPotion;
+import net.minecraft.server.v1_5_R3.ItemStack;
+import net.minecraft.server.v1_5_R3.MobEffect;
+import net.minecraft.server.v1_5_R3.World;
+=======
 import net.minecraft.server.v1_5_R2.EntityHuman;
 import net.minecraft.server.v1_5_R2.EnumAnimation;
 import net.minecraft.server.v1_5_R2.Item;
@@ -13,6 +22,7 @@ import net.minecraft.server.v1_5_R2.ItemPotion;
 import net.minecraft.server.v1_5_R2.ItemStack;
 import net.minecraft.server.v1_5_R2.MobEffect;
 import net.minecraft.server.v1_5_R2.World;
+>>>>>>> .r52
 
 public class PotionHook extends ItemPotion {
 
@@ -32,12 +42,21 @@ public class PotionHook extends ItemPotion {
 		realVersion = Item.POTION;
 		Item.POTION = this;
 	}
-	
-	
 
 	@Override
-	public ItemStack a(ItemStack arg0, World arg1, EntityHuman arg2) {
+	public List<MobEffect> c(int id) {
 		if(ChangeDamagePlugin.verbose)
+<<<<<<< .mine
+			System.out.println("[ChangeDamage] method b # 3 called");
+		if(ChangeDamagePlugin.verbose)
+			System.out.println("[ChangeDamage] Request for potion with id: " + id);
+		List<MobEffect> effectList = (List<MobEffect>)customEffects.get(Integer.valueOf(id));
+		if(ChangeDamagePlugin.verbose)
+			System.out.println("[ChangeDamage] Resulting list: " + effectList.toString());
+		return effectList == null ? ((List<MobEffect>) super.c(id)) : effectList;
+	}
+
+=======
 			System.out.println("[ChangeDamage] method a called");
 		return super.a(arg0, arg1, arg2);
 	}
@@ -102,6 +121,7 @@ public class PotionHook extends ItemPotion {
 //		return effectList == null ? ((List<MobEffect>) super.b(id)) : effectList;
 //	}
 
+>>>>>>> .r52
 	public void releaseHook(){
 		Item.POTION = realVersion;
 	}

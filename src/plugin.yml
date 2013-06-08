@@ -1,5 +1,9 @@
 name: ChangeDamage
+<<<<<<< .mine
+version: 1.8.4
+=======
 version: 1.8.2
+>>>>>>> .r52
 description: Change damage done by an item
 author: FalseVacuum
 authors: [FalseVacuum] 
