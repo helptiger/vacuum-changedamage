@@ -4,12 +4,31 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
 
+<<<<<<< .mine
+import net.minecraft.server.v1_5_R3.EnchantmentManager;
+import net.minecraft.server.v1_5_R3.EntityLiving;
+import net.minecraft.server.v1_5_R3.EntityPlayer;
+import net.minecraft.server.v1_5_R3.MobEffectList;
+=======
 import net.minecraft.server.v1_5_R2.EnchantmentManager;
 import net.minecraft.server.v1_5_R2.EntityLiving;
 import net.minecraft.server.v1_5_R2.EntityPlayer;
 import net.minecraft.server.v1_5_R2.MobEffectList;
+>>>>>>> .r52
 
 import org.bukkit.World;
+<<<<<<< .mine
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftArrow;
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftEgg;
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftEnderPearl;
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftFireball;
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftSmallFireball;
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftSnowball;
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftThrownExpBottle;
+import org.bukkit.craftbukkit.v1_5_R3.entity.CraftThrownPotion;
+=======
 import org.bukkit.craftbukkit.v1_5_R2.entity.CraftArrow;
 import org.bukkit.craftbukkit.v1_5_R2.entity.CraftEgg;
 import org.bukkit.craftbukkit.v1_5_R2.entity.CraftEnderPearl;
@@ -21,6 +40,7 @@ import org.bukkit.craftbukkit.v1_5_R2.entity.CraftSmallFireball;
 import org.bukkit.craftbukkit.v1_5_R2.entity.CraftSnowball;
 import org.bukkit.craftbukkit.v1_5_R2.entity.CraftThrownExpBottle;
 import org.bukkit.craftbukkit.v1_5_R2.entity.CraftThrownPotion;
+>>>>>>> .r52
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -294,6 +314,9 @@ public class DamageListener implements Listener{
 		}
 		
 		/* apply critical */
+<<<<<<< .mine
+		if((mcPlayer.fallDistance > 0.0F) && (!mcPlayer.onGround) && (!mcPlayer.g_()) && (!mcPlayer.G()) && (!mcPlayer.hasEffect(MobEffectList.BLINDNESS)) && (mcPlayer.vehicle == null) && ((((CraftEntity)entity).getHandle() instanceof EntityLiving))){
+=======
 		if(		(mcPlayer.fallDistance > 0.0F)
 				&&(!mcPlayer.onGround)
 				&& (!mcPlayer.g_())
@@ -302,6 +325,7 @@ public class DamageListener implements Listener{
 				&& (mcPlayer.vehicle == null)
 				&& entity instanceof LivingEntity
 				){
+>>>>>>> .r52
 			if(equations.containsKey("critical")){
 				pool.getVariable("d").setValue(mcPlayer.fallDistance);
 				damage.setValue(equations.get("critical").evaluate());

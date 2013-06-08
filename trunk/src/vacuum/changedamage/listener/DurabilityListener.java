@@ -2,7 +2,7 @@ package vacuum.changedamage.listener;
 
 import java.util.HashMap;
 
-import org.bukkit.craftbukkit.v1_5_R2.inventory.CraftItemStack;
+import org.bukkit.craftbukkit.v1_5_R3.inventory.CraftItemStack;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -17,7 +17,7 @@ public class DurabilityListener implements Listener{
 		Double change = changeMap.get(evt.getPlayer().getItemInHand().getTypeId());
 		if(change != null && change < 0){
 			change = -change;
-			net.minecraft.server.v1_5_R2.ItemStack stack = CraftItemStack.asNMSCopy(evt.getPlayer().getItemInHand());
+			net.minecraft.server.v1_5_R3.ItemStack stack = CraftItemStack.asNMSCopy(evt.getPlayer().getItemInHand());
 			int x = (int)Math.floor(change) + ((Math.random() < (change - Math.floor(change))) ? 1 : 0);
 			stack.setData(stack.getData() + x);
 		}
@@ -28,7 +28,7 @@ public class DurabilityListener implements Listener{
 		Double change = changeMap.get(evt.getPlayer().getItemInHand().getTypeId());
 		if(change != null && change > 0){
 			change = -change;
-			net.minecraft.server.v1_5_R2.ItemStack stack =  CraftItemStack.asNMSCopy(evt.getPlayer().getItemInHand());
+			net.minecraft.server.v1_5_R3.ItemStack stack = CraftItemStack.asNMSCopy(evt.getPlayer().getItemInHand());
 			int x = (int)Math.floor(change) + ((Math.random() < (change - Math.floor(change))) ? 1 : 0);
 			stack.setData(stack.getData() - x);
 		}

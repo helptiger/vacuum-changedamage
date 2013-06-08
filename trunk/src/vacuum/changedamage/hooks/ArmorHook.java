@@ -4,8 +4,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 
+<<<<<<< .mine
+import net.minecraft.server.v1_5_R3.Item;
+import net.minecraft.server.v1_5_R3.ItemArmor;
+=======
 import net.minecraft.server.v1_5_R2.Item;
 import net.minecraft.server.v1_5_R2.ItemArmor;
+>>>>>>> .r52
+
 
 public class ArmorHook {
 	
@@ -17,7 +23,11 @@ public class ArmorHook {
 	
 	public ArmorHook() throws SecurityException, NoSuchFieldException, IllegalAccessException{
 		Class<ItemArmor> itemArmor = ItemArmor.class;
+<<<<<<< .mine
+		b = itemArmor.getField("c");
+=======
 		armorValueField = itemArmor.getField(armorFieldName);
+>>>>>>> .r52
 		Field modifiersField = Field.class.getDeclaredField("modifiers");
 		modifiersField.setAccessible(true);
 		modifiersField.setInt(armorValueField, armorValueField.getModifiers() & ~Modifier.FINAL);
